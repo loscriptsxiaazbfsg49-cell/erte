@@ -78,6 +78,24 @@ body {
 
 /* Mobile adjustments */
 @media (max-width: 767px) {
+
+    :root,
+    html.dark {
+        --color-background-light: 0 0 0 !important;
+        --color-background-subtle: 10 10 10 !important;
+        /* Deeper black-gray */
+        --color-border-subtle: 28 28 28 !important;
+        /* Subtle dark border */
+        --color-text-main: 255 255 255 !important;
+        --color-text-muted: 140 140 140 !important;
+    }
+
+    body,
+    #mainContent,
+    #contentArea {
+        background-color: black !important;
+    }
+
     #sidebar {
         position: fixed;
         left: 0;
@@ -125,13 +143,12 @@ body {
     .simplified-mode:not(.conversation-started) #titleArea {
         position: absolute !important;
         top: 32% !important;
-        /* Slightly above middle */
         left: 0 !important;
         right: 0 !important;
         transform: translateY(-50%) !important;
-        padding: 0 16px !important;
-        /* Increased margins as requested */
-        /* Small margins as requested */
+        margin: 0 !important;
+        padding: 0 24px !important;
+        /* Increased safety margins */
         bottom: auto !important;
         z-index: 61 !important;
         display: flex !important;
@@ -139,12 +156,14 @@ body {
         align-items: center !important;
         justify-content: center !important;
         pointer-events: none !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
     }
 
     #titleArea h1 {
-        font-size: clamp(1.4rem, 7.2vw, 1.8rem) !important;
-        /* Adaptive size based on screen width */
-        line-height: normal !important;
+        font-size: min(1.8rem, 6.2vw) !important;
+        /* Slightly smaller to fit perfectly */
+        line-height: 1.2 !important;
         text-align: center !important;
         max-width: 100% !important;
         margin: 0 auto !important;
