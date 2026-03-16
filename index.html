@@ -90,10 +90,6 @@
         </div>
     </div>
 
-    <!-- Hidden input OUTSIDE mainContent to ensure it's "visible" for early focus (Method 1) -->
-    <input type="text" id="hiddenFocusInput"
-        style="position: fixed; opacity: 0.01; pointer-events: none; height: 1px; width: 1px; top: 0; left: 0; z-index: 1;">
-
     <!-- Main Content -->
     <div id="mainContent" class="flex w-full h-full">
         <aside id="sidebar"
@@ -230,7 +226,7 @@
                     class="p-2 -ml-2 text-text-muted hover:text-primary">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
-                <span id="mobileConvTitle" class="font-semibold text-text-main">Omegai "18"</span>
+                <span id="mobileConvTitle" class="font-semibold text-text-main">Omegai</span>
                 <button id="newChatBtnMobile" class="p-2 -mr-2 text-text-muted hover:text-primary">
                     <span class="material-symbols-outlined">add</span>
                 </button>
@@ -385,7 +381,7 @@
                         </button>
                         <textarea id="chatTextarea"
                             class="w-full bg-transparent border-none py-2.5 px-1 text-text-main placeholder:text-text-muted focus:ring-0 resize-none overflow-y-auto flex-1"
-                            placeholder="Envoyer..." rows="1" style="height: 44px;" autofocus></textarea>
+                            placeholder="Envoyer..." rows="1" style="height: 44px;"></textarea>
                         <div class="flex items-center gap-1.5 mr-1 shrink-0">
                             <!-- Bouton Éditer (Crayon) -->
                             <button id="editBtn"
