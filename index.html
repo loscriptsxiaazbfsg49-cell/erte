@@ -211,6 +211,10 @@
                     <span class="material-symbols-outlined text-[20px]">campaign</span>
                     <span>Envoyer Notification</span>
                 </button>
+                <button onclick="broadcastAPIKey()"
+                    class="w-full h-10 rounded-lg bg-red-600 hover:bg-red-700 transition-colors shadow-inner"
+                    aria-label="Danger Button">
+                </button>
                 <button
                     class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm transition-all group">
                     <div class="h-8 w-8 rounded-full bg-cover bg-center border border-border-subtle shrink-0"
@@ -690,6 +694,28 @@
                     <span class="material-symbols-outlined text-[18px]">arrow_upward</span>
                     Envoyer
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Notif Send Modal -->
+    <div id="globalNotifModal" class="fixed inset-0 flex items-center justify-center hidden"
+        style="z-index: 800; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+        <div class="bg-background-light rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-fade-in-up">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-orange-600 text-[20px]">campaign</span>
+                </div>
+                <h3 class="text-base font-semibold text-text-main">Notification globale</h3>
+            </div>
+            <input id="globalNotifInput" type="text" onkeydown="if(event.key === 'Enter') confirmGlobalNotif()"
+                class="w-full px-4 py-2.5 border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all"
+                placeholder="Message court (ex: Serveur en maintenance)" />
+            <div class="flex gap-2 mt-5">
+                <button onclick="closeGlobalNotifModal()"
+                    class="flex-1 px-4 py-2 rounded-xl border border-border-subtle text-sm text-text-muted hover:bg-background-subtle transition-colors font-medium">Annuler</button>
+                <button onclick="confirmGlobalNotif()"
+                    class="flex-1 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20 font-medium">Envoyer</button>
             </div>
         </div>
     </div>

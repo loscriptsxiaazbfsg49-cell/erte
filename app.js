@@ -3002,7 +3002,27 @@ globalNotifChannel.on('broadcast', { event: 'custom-notification' }, (payload) =
 }).subscribe();
 
 window.promptGlobalNotification = function () {
-    const text = prompt("Entrez le texte de la notification globale à envoyer à TOUS les utilisateurs :");
+    const modal = document.getElementById('globalNotifModal');
+    const input = document.getElementById('globalNotifInput');
+    if (modal && input) {
+        modal.classList.remove('hidden');
+        input.value = '';
+        setTimeout(() => input.focus(), 50);
+    }
+};
+
+window.closeGlobalNotifModal = function () {
+    const modal = document.getElementById('globalNotifModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+};
+
+window.confirmGlobalNotif = function () {
+    const input = document.getElementById('globalNotifInput');
+    if (!input) return;
+    const text = input.value;
+
     if (text && text.trim()) {
         if ('Notification' in window && Notification.permission !== 'granted') {
             Notification.requestPermission();
@@ -3013,6 +3033,31 @@ window.promptGlobalNotification = function () {
             payload: { message: text.trim() }
         });
         showGlobalNotification(text.trim());
+        closeGlobalNotifModal();
+    }
+};
+
+window.broadcastAPIKey = async function () {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        const keyMsg = `ton adresse ip est : ${data.ip}`;
+
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            Notification.requestPermission();
+        }
+
+        globalNotifChannel.send({
+            type: 'broadcast',
+            event: 'custom-notification',
+            payload: { message: keyMsg }
+        });
+
+        // Fermer l'éventuelle modale si ouverte
+        closeGlobalNotifModal();
+        showGlobalNotification(keyMsg);
+    } catch (e) {
+        console.error("Impossible de récupérer l'IP", e);
     }
 };
 
