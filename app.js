@@ -1370,15 +1370,25 @@ function initAIProviders() {
     function positionModelBar() {
         const bar = $('inputBar'), inner = $('modelSelectorInner'), list = $('modelList');
         if (!bar || !inner) return;
+
+        if (window.innerWidth < 768) {
+            modelBar.style.left = '12px';
+            modelBar.style.width = 'calc(100% - 24px)';
+            modelBar.style.bottom = 'auto';
+            modelBar.style.top = '140px'; // Just below horizontal providers (60+75+5)
+            if (list) list.style.maxHeight = '40vh';
+            inner.style.width = '100%';
+            return;
+        }
+
         const r = bar.getBoundingClientRect();
         modelBar.style.left = r.left + 'px';
         modelBar.style.width = r.width + 'px';
         const isSimplifiedNoConv = document.body.classList.contains('simplified-mode') && !document.body.classList.contains('conversation-started');
         if (isSimplifiedNoConv) {
-            modelBar.style.bottom = 'auto';
             modelBar.style.top = (r.bottom + 8) + 'px';
+            modelBar.style.bottom = 'auto';
             if (list) {
-                // Determine space left below input bar minus header/margins (~70px)
                 const spaceAvailable = window.innerHeight - (r.bottom + 8) - 70;
                 list.style.maxHeight = Math.max(80, Math.min(spaceAvailable, 500)) + 'px';
             }

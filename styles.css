@@ -121,53 +121,166 @@ body {
         display: none !important;
     }
 
-    /* Input positioning on mobile (always at bottom) */
-    .simplified-mode:not(.conversation-started) #contentArea {
-        justify-content: flex-end !important;
-    }
-
-    .simplified-mode:not(.conversation-started) #inputContainer {
-        position: relative !important;
-        top: auto !important;
-        bottom: 0 !important;
-        pointer-events: auto !important;
-        padding-bottom: 20px !important;
-    }
-
+    /* Title position: higher and centered */
     .simplified-mode:not(.conversation-started) #titleArea {
-        position: relative !important;
+        position: absolute !important;
+        top: 32% !important;
+        /* Slightly above middle */
+        left: 0 !important;
+        right: 0 !important;
+        transform: translateY(-50%) !important;
+        margin: 0 !important;
+        padding: 0 40px !important;
         bottom: auto !important;
-        margin-top: auto !important;
-        margin-bottom: 20px !important;
+        z-index: 61 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: none !important;
     }
 
     #titleArea h1 {
-        font-size: 1.5rem !important;
-        /* Smaller text on mobile */
+        font-size: 1.25rem !important;
+        line-height: 1.4 !important;
+        text-align: center !important;
+        max-width: 280px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        display: block !important;
     }
 
-    /* Thinner input bar on mobile */
+    /* Input positioning on mobile: Visible at the bottom with enough margin */
+    .simplified-mode:not(.conversation-started) #inputContainer {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        /* Padding bottom extra for mobile browsers nav bars */
+        padding: 0 16px env(safe-area-inset-bottom, 32px) 16px !important;
+        padding-bottom: 32px !important;
+        /* Fallback */
+        top: auto !important;
+        z-index: 100 !important;
+        pointer-events: auto !important;
+        background: transparent !important;
+    }
+
+    .conversation-started #inputContainer {
+        padding-bottom: env(safe-area-inset-bottom, 12px) !important;
+    }
+
+    /* Thinner and cleaner input bar */
     #inputBar {
-        padding: 4px 6px !important;
-        border-radius: 1.5rem !important;
+        padding: 4px 10px !important;
+        border-radius: 20px !important;
+        min-height: 44px !important;
+        background: rgb(var(--color-background-subtle) / 0.98) !important;
     }
 
     #chatTextarea {
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
-        font-size: 14px !important;
-        height: 36px !important;
-        /* Force thinner height on mobile */
-        min-height: 36px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        font-size: 15px !important;
+        height: 42px !important;
+        min-height: 42px !important;
     }
 
     #inputBar button {
-        width: 32px !important;
-        height: 32px !important;
+        width: 36px !important;
+        height: 36px !important;
     }
 
-    #inputBar button span {
-        font-size: 18px !important;
+    /* AI Providers Horizontal Bar for Mobile */
+    #aiProviderSidebar {
+        position: fixed !important;
+        top: 60px !important;
+        /* Below mobile header */
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 75px !important;
+        flex-direction: row !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgb(var(--color-border-subtle)) !important;
+        background: rgb(var(--color-background-light) / 0.95) !important;
+        backdrop-filter: blur(15px) !important;
+        z-index: 85 !important;
+        padding: 0 !important;
+        transform: translateY(-100%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        display: none;
+    }
+
+    #aiProviderSidebar.sidebar-show {
+        display: flex !important;
+        transform: translateY(0) !important;
+        animation: none !important;
+    }
+
+    #providerLogoList {
+        flex-direction: row !important;
+        padding: 0 16px !important;
+        gap: 16px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        height: 100% !important;
+    }
+
+    #providerLogoList::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .provider-logo-btn {
+        flex-direction: column !important;
+        justify-content: center !important;
+        height: 60px !important;
+        width: 56px !important;
+        flex-shrink: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        gap: 4px !important;
+    }
+
+    .provider-logo-btn img,
+    .provider-logo-btn span.material-symbols-outlined {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 26px !important;
+        margin: 0 !important;
+    }
+
+    .provider-pill-text {
+        display: block !important;
+        font-size: 10px !important;
+        font-weight: 500 !important;
+        text-align: center !important;
+        max-width: 100% !important;
+        opacity: 0.9 !important;
+        padding: 0 2px !important;
+        line-height: 1.1 !important;
+    }
+
+    .provider-tooltip {
+        display: none !important;
+    }
+
+    /* Adjust layout toggle button */
+    #pyramidLayoutToggleBtn,
+    #sidebarLayoutToggleBtn {
+        right: 16px !important;
+        bottom: 90px !important;
+        width: 44px !important;
+        height: 44px !important;
+        background: rgb(var(--color-background-light) / 0.9) !important;
+        backdrop-filter: blur(4px) !important;
     }
 }
 
