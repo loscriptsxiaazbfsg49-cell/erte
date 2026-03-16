@@ -129,7 +129,8 @@ body {
         left: 0 !important;
         right: 0 !important;
         transform: translateY(-50%) !important;
-        padding: 0 10px !important;
+        padding: 0 16px !important;
+        /* Increased margins as requested */
         /* Small margins as requested */
         bottom: auto !important;
         z-index: 61 !important;

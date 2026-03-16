@@ -1860,6 +1860,34 @@ function initMobileOptimizations() {
                 localStorage.setItem('installPromptSkipped', 'true');
             };
         }
+
+        // Swipe gesture to open/close sidebar
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipeGesture();
+        }, false);
+
+        function handleSwipeGesture() {
+            const sidebar = $('sidebar');
+            if (!sidebar) return;
+            const diffX = touchEndX - touchStartX;
+
+            // Swiping right (moving finger to the right) should show the menu if starting from left
+            if (diffX > 60 && touchStartX < window.innerWidth * 0.25) {
+                if (sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
+            }
+            // Swiping left (moving finger to the left) to close it
+            else if (diffX < -60) {
+                if (!sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
+            }
+        }
     }
 }
 
