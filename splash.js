@@ -149,14 +149,15 @@
         };
 
         splashScreen.addEventListener('mousedown', e => {
-            requestInitialFocus();
             startDrawing(e.clientX, e.clientY);
         });
         window.addEventListener('mousemove', e => moveDrawing(e.clientX, e.clientY));
-        window.addEventListener('mouseup', () => drawing = false);
+        window.addEventListener('mouseup', () => {
+            if (!initialFocusRequested) requestInitialFocus();
+            drawing = false;
+        });
 
         splashScreen.addEventListener('touchstart', e => {
-            requestInitialFocus();
             const touch = e.touches[0];
             startDrawing(touch.clientX, touch.clientY);
         }, { passive: false });
@@ -165,10 +166,13 @@
             if (!drawing) return;
             const touch = e.touches[0];
             moveDrawing(touch.clientX, touch.clientY);
-            e.preventDefault(); // Bloque le scroll pendant le dessin
+            e.preventDefault();
         }, { passive: false });
 
-        window.addEventListener('touchend', () => drawing = false);
+        window.addEventListener('touchend', () => {
+            if (!initialFocusRequested) requestInitialFocus();
+            drawing = false;
+        });
     }
 
     // Gestion des polices (facultatif ici car non bloquant pour le dessin)
