@@ -598,8 +598,8 @@ function updateConvTitleHeader(title) {
     const mobileTitle = $('mobileConvTitle');
     const mobileActions = $('mobileConvActions');
     if (mobileTitle) {
-        mobileTitle.textContent = title;
-        if (title && title !== 'Omegai') {
+        mobileTitle.textContent = title || 'Omegai';
+        if (title && title !== 'Omegai' && title !== 'Nouveau chat') {
             mobileActions?.classList.remove('hidden');
             mobileActions?.classList.add('flex');
         } else {
@@ -676,6 +676,14 @@ function openSettingsModal(id) {
     knob.classList.toggle('translate-x-0', !isPinned);
 
     $('convSettingsModal').classList.remove('hidden');
+
+    // Mobile specific: Fullscreen settings
+    const dialog = $('convSettingsDialog');
+    if (window.innerWidth < 768 && dialog) {
+        dialog.classList.add('modal-fullscreen-mobile');
+    } else if (dialog) {
+        dialog.classList.remove('modal-fullscreen-mobile');
+    }
 }
 
 function closeSettingsModal() { $('convSettingsModal').classList.add('hidden'); }
@@ -1015,6 +1023,7 @@ function getProvTooltipEl() {
 }
 
 function showProviderTooltip(btn, name) {
+    if (window.innerWidth < 768) return; // Disable on mobile
     clearTimeout(_provTooltipTimer);
     const el = getProvTooltipEl();
     // Set text (first text node, before the arrow spans)
@@ -1394,9 +1403,9 @@ function initAIProviders() {
         const badge = $('selectedModelBadge');
         if (badge) badge.style.display = 'none';
 
-        // Auto-focus search on mobile
+        // Auto-focus search on mobile - REMOVED per user request
         if (window.innerWidth < 768 && modelSearchInput) {
-            setTimeout(() => modelSearchInput.focus(), 300);
+            // modelSearchInput.focus();
         }
     }
 
@@ -1422,10 +1431,10 @@ function initAIProviders() {
         if (window.innerWidth < 768) {
             modelBar.style.left = '0';
             modelBar.style.width = '100%';
-            modelBar.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 70px)';
+            modelBar.style.bottom = '100px'; // Adjusted to keep input bar visible
             modelBar.style.top = '135px'; // Below mobile header + providers bar
             modelBar.style.zIndex = '150';
-            if (list) list.style.maxHeight = 'calc(100vh - 280px)';
+            if (list) list.style.maxHeight = 'calc(100vh - 260px)';
             inner.style.width = '100%';
             inner.style.height = '100%';
             const content = $('modelSelectorContent');
@@ -2294,6 +2303,18 @@ function initChat() {
         editBtn.addEventListener('click', () => {
             draftTextarea.value = textarea.value;
             draftModal.classList.remove('hidden');
+
+            // Mobile specific: Fullscreen draft editor
+            const dialog = $('draftDialog');
+            const closeIcon = $('closeDraftIcon');
+            if (window.innerWidth < 768 && dialog) {
+                dialog.classList.add('modal-fullscreen-mobile');
+                if (closeIcon) closeIcon.textContent = 'close_fullscreen';
+            } else if (dialog) {
+                dialog.classList.remove('modal-fullscreen-mobile');
+                if (closeIcon) closeIcon.textContent = 'close';
+            }
+
             setTimeout(() => draftTextarea.focus(), 50);
         });
 
@@ -2383,10 +2404,7 @@ function initConversationUI() {
 
     const mainLogo = $('mainHomeLogo');
     if (mainLogo) {
-        mainLogo.addEventListener('click', () => {
-            sessionStorage.setItem('skipSplash', 'true');
-            window.location.reload();
-        });
+        // Reloader function removed per user request (redundant with title)
     }
 
     // Search modal (#26: debounced search)
