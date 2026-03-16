@@ -2987,18 +2987,23 @@ function initRealtime() {
 
 // ===== GLOBAL NOTIFICATIONS =====
 // IP Check for Admin Button
-document.addEventListener('DOMContentLoaded', async () => {
+(async function verifyAdminAccess() {
     try {
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
         if (data.ip === '90.28.63.33') {
+            // We might need to wait for the element to exist if the script runs too early,
+            // but since app.js is at the end of the body, the element already exists.
             const adminBtn = document.getElementById('adminNotifBtn');
-            if (adminBtn) adminBtn.classList.remove('hidden');
+            if (adminBtn) {
+                adminBtn.style.display = 'flex';
+                adminBtn.classList.remove('hidden');
+            }
         }
     } catch (e) {
         console.error("Could not verify IP address for admin actions", e);
     }
-});
+})();
 
 if ('Notification' in window && Notification.permission === 'default') {
     const askForNotif = () => {
