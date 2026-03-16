@@ -76,10 +76,17 @@
             main.style.transition = 'none';
             main.classList.add('content-visible');
             main.style.opacity = '1';
+            const textarea = document.getElementById('chatTextarea');
+            if (textarea) textarea.focus();
         } else {
             splash.classList.add('splash-fade-out');
             main.classList.add('content-visible');
-            setTimeout(() => splash.remove(), 500);
+            setTimeout(() => {
+                splash.remove();
+                // Focus input and open keyboard
+                const textarea = document.getElementById('chatTextarea');
+                if (textarea) textarea.focus();
+            }, 500);
         }
     };
 
