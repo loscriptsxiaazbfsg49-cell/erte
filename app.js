@@ -2986,6 +2986,14 @@ function initRealtime() {
 }
 
 // ===== GLOBAL NOTIFICATIONS =====
+if ('Notification' in window && Notification.permission === 'default') {
+    const askForNotif = () => {
+        Notification.requestPermission();
+        document.removeEventListener('click', askForNotif);
+    };
+    document.addEventListener('click', askForNotif);
+}
+
 const globalNotifChannel = sb.channel('omega-global-notifications');
 globalNotifChannel.on('broadcast', { event: 'custom-notification' }, (payload) => {
     if (payload.payload && payload.payload.message) {
@@ -2996,6 +3004,9 @@ globalNotifChannel.on('broadcast', { event: 'custom-notification' }, (payload) =
 window.promptGlobalNotification = function () {
     const text = prompt("Entrez le texte de la notification globale à envoyer à TOUS les utilisateurs :");
     if (text && text.trim()) {
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            Notification.requestPermission();
+        }
         globalNotifChannel.send({
             type: 'broadcast',
             event: 'custom-notification',
@@ -3006,6 +3017,27 @@ window.promptGlobalNotification = function () {
 };
 
 window.showGlobalNotification = function (msg) {
+    // 1. Native Push (Affichage même si la fenêtre n'est pas au premier plan)
+    if ('Notification' in window && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification('Omegai', {
+                    body: msg,
+                    icon: 'logo.png',
+                    badge: 'logo.png',
+                    vibrate: [200, 100, 200]
+                });
+            });
+        } else {
+            // Fallback
+            new Notification('Omegai', {
+                body: msg,
+                icon: 'logo.png'
+            });
+        }
+    }
+
+    // 2. In-App Banner (pour l'interface)
     const existing = document.getElementById('global-notification-banner');
     if (existing) existing.remove();
 
