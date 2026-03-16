@@ -221,19 +221,36 @@
 
         <main class="flex-1 flex flex-col h-full min-h-0 relative bg-background-light">
             <div
-                class="md:hidden flex items-center justify-between p-4 border-b border-border-subtle bg-background-light z-20">
-                <button id="mobileMenuBtn" onclick="toggleSidebar()"
-                    class="p-2 -ml-2 text-text-muted hover:text-primary">
-                    <span class="material-symbols-outlined">menu</span>
-                </button>
-                <span id="mobileConvTitle" class="font-semibold text-text-main">Omegai</span>
-                <button id="newChatBtnMobile" class="p-2 -mr-2 text-text-muted hover:text-primary">
+                class="md:hidden flex items-center justify-between p-3 border-b border-border-subtle bg-background-light z-20">
+                <div class="flex items-center gap-1 min-w-0">
+                    <button id="mobileMenuBtn" onclick="toggleSidebar()"
+                        class="p-2 -ml-2 text-text-muted hover:text-primary shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <!-- Wrapper for editable title -->
+                    <div id="mobileTitleWrapper" class="flex items-center gap-1 min-w-0">
+                        <span id="mobileConvTitle"
+                            class="font-semibold text-text-main truncate max-w-[150px] cursor-pointer">Omegai</span>
+                        <input id="mobileTitleInput" type="text"
+                            class="hidden bg-transparent border-none font-semibold text-text-main focus:ring-0 p-0 w-full" />
+                    </div>
+                    <!-- Conversation actions (edit/settings) -->
+                    <div id="mobileConvActions" class="hidden items-center gap-0.5 shrink-0">
+                        <button id="renameConvBtnMobile" class="p-1.5 text-text-muted hover:text-primary">
+                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button id="convSettingsBtnMobile" class="p-1.5 text-text-muted hover:text-primary">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                    </div>
+                </div>
+                <button id="newChatBtnMobile" class="p-2 -mr-2 text-text-muted hover:text-primary shrink-0">
                     <span class="material-symbols-outlined">add</span>
                 </button>
             </div>
 
             <!-- Top bar -->
-            <div id="topBar" class="flex justify-center px-4 md:px-0 py-3 shrink-0 relative z-20">
+            <div id="topBar" class="flex justify-center px-4 md:px-0 py-3 shrink-0 relative z-20 md:flex hidden">
                 <!-- Conversation title — absolute left, does NOT affect centering -->
                 <div id="currentConvTitleArea"
                     class="hidden items-center gap-1 absolute left-4 md:left-14 top-1/2 -translate-y-1/2">
@@ -443,6 +460,13 @@
                             class="p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
                             <span class="material-symbols-outlined text-[18px]">close</span>
                         </button>
+                    </div>
+                    <!-- Search bar for models -->
+                    <div id="modelSearchWrapper" class="mb-2 relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+                        <input id="modelSearchInput" type="text" placeholder="Rechercher un modèle..."
+                            class="w-full pl-9 pr-4 py-2 bg-background-subtle border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-border-subtle transition-all" />
                     </div>
                     <div id="modelList" class="flex flex-col gap-1 max-h-[200px] overflow-y-auto custom-scrollbar">
                     </div>

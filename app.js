@@ -559,6 +559,12 @@ function startNewChat() {
     const titleEl = $('currentConvTitle');
     if (titleEl) titleEl.textContent = '';
 
+    // Mobile title reset
+    const mobTitle = $('mobileConvTitle');
+    const mobActions = $('mobileConvActions');
+    if (mobTitle) mobTitle.textContent = 'Omegai';
+    if (mobActions) mobActions.classList.add('hidden');
+
     // #7/#8: Hide model selector bar and AI sidebar
     const modelBar = $('modelSelectorBar');
     if (modelBar) modelBar.classList.add('hidden');
@@ -590,7 +596,17 @@ function updateConvTitleHeader(title) {
         area.classList.add('flex');
     }
     const mobileTitle = $('mobileConvTitle');
-    if (mobileTitle) mobileTitle.textContent = title;
+    const mobileActions = $('mobileConvActions');
+    if (mobileTitle) {
+        mobileTitle.textContent = title;
+        if (title && title !== 'Omegai') {
+            mobileActions?.classList.remove('hidden');
+            mobileActions?.classList.add('flex');
+        } else {
+            mobileActions?.classList.add('hidden');
+            mobileActions?.classList.remove('flex');
+        }
+    }
 }
 
 // ===== CONTEXT MENU =====
@@ -1046,6 +1062,7 @@ function initAIProviders() {
     const selName = $('selectedProviderName');
     const closeBtn = $('closeModelSelector');
     const textarea = $('chatTextarea');
+    const modelSearchInput = $('modelSearchInput');
 
     async function fetchModels() {
         try {
@@ -1361,7 +1378,11 @@ function initAIProviders() {
         document.querySelectorAll('.provider-logo-btn').forEach(b => b.classList.toggle('selected', b.dataset.slug === slug));
         selLogo.src = prov.logoUrl; selLogo.alt = prov.name;
         selName.textContent = prov.name;
+
+        // Clear search when selecting new provider
+        if (modelSearchInput) modelSearchInput.value = '';
         renderModels(prov.models);
+
         modelBar.classList.remove('hidden');
         positionModelBar();
 
@@ -1372,6 +1393,26 @@ function initAIProviders() {
 
         const badge = $('selectedModelBadge');
         if (badge) badge.style.display = 'none';
+
+        // Auto-focus search on mobile
+        if (window.innerWidth < 768 && modelSearchInput) {
+            setTimeout(() => modelSearchInput.focus(), 300);
+        }
+    }
+
+    // Add search listener
+    if (modelSearchInput) {
+        modelSearchInput.addEventListener('input', () => {
+            if (!state.selectedProvider) return;
+            const prov = state.providerMap[state.selectedProvider];
+            if (!prov) return;
+            const query = modelSearchInput.value.toLowerCase().trim();
+            const filtered = prov.models.filter(m =>
+                m.name?.toLowerCase().includes(query) ||
+                m.id?.toLowerCase().includes(query)
+            );
+            renderModels(filtered);
+        });
     }
 
     function positionModelBar() {
@@ -1379,12 +1420,20 @@ function initAIProviders() {
         if (!bar || !inner) return;
 
         if (window.innerWidth < 768) {
-            modelBar.style.left = '12px';
-            modelBar.style.width = 'calc(100% - 24px)';
-            modelBar.style.bottom = 'auto';
-            modelBar.style.top = '140px'; // Just below horizontal providers (60+75+5)
-            if (list) list.style.maxHeight = '40vh';
+            modelBar.style.left = '0';
+            modelBar.style.width = '100%';
+            modelBar.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 70px)';
+            modelBar.style.top = '135px'; // Below mobile header + providers bar
+            modelBar.style.zIndex = '150';
+            if (list) list.style.maxHeight = 'calc(100vh - 280px)';
             inner.style.width = '100%';
+            inner.style.height = '100%';
+            const content = $('modelSelectorContent');
+            if (content) {
+                content.style.height = '100%';
+                content.style.borderRadius = '20px 20px 0 0';
+                content.style.marginBottom = '0';
+            }
             return;
         }
 
@@ -1858,6 +1907,8 @@ function initMobileOptimizations() {
             skipBtn.onclick = () => {
                 modal.classList.add('hidden');
                 localStorage.setItem('installPromptSkipped', 'true');
+                const textarea = document.getElementById('chatTextarea');
+                if (textarea) textarea.focus();
             };
         }
 
@@ -2380,7 +2431,42 @@ function initConversationUI() {
     // Close context menu on outside click
     document.addEventListener('mousedown', (e) => { if (!$('convContextMenu').contains(e.target)) hideConvContextMenu(); });
 
-    // Header rename/settings buttons
+    // Mobile header rename/settings buttons
+    $('renameConvBtnMobile')?.addEventListener('click', () => { if (state.currentConversationId) openRenameModal(state.currentConversationId); });
+    $('convSettingsBtnMobile')?.addEventListener('click', () => { if (state.currentConversationId) openSettingsModal(state.currentConversationId); });
+
+    // Editable mobile title
+    const mobileTitle = $('mobileConvTitle');
+    const mobileInput = $('mobileTitleInput');
+
+    if (mobileTitle && mobileInput) {
+        mobileTitle.addEventListener('click', () => {
+            if (!state.currentConversationId) return;
+            mobileTitle.classList.add('hidden');
+            mobileInput.classList.remove('hidden');
+            mobileInput.value = mobileTitle.textContent;
+            mobileInput.focus();
+            mobileInput.select();
+        });
+
+        mobileInput.addEventListener('blur', async () => {
+            const newTitle = mobileInput.value.trim();
+            if (newTitle && newTitle !== mobileTitle.textContent) {
+                await updateConversation(state.currentConversationId, { title: newTitle });
+            }
+            mobileInput.classList.add('hidden');
+            mobileTitle.classList.remove('hidden');
+        });
+
+        mobileInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') mobileInput.blur();
+            if (e.key === 'Escape') {
+                mobileInput.value = mobileTitle.textContent;
+                mobileInput.blur();
+            }
+        });
+    }
+
     $('renameConvBtn')?.addEventListener('click', () => { if (state.currentConversationId) openRenameModal(state.currentConversationId); });
     $('convSettingsBtn')?.addEventListener('click', () => { if (state.currentConversationId) openSettingsModal(state.currentConversationId); });
 
