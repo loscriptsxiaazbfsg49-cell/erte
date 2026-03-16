@@ -1858,8 +1858,6 @@ function initMobileOptimizations() {
             skipBtn.onclick = () => {
                 modal.classList.add('hidden');
                 localStorage.setItem('installPromptSkipped', 'true');
-                const textarea = document.getElementById('chatTextarea');
-                if (textarea) textarea.focus();
             };
         }
 

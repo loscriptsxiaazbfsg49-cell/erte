@@ -62,9 +62,25 @@
     }
 
     let isFinished = false;
+    let initialFocusRequested = false;
+
+    // Helper to request focus ONLY ONCE on mobile
+    const requestInitialFocus = () => {
+        if (initialFocusRequested || window.innerWidth >= 768) return;
+        const textarea = document.getElementById('chatTextarea');
+        if (textarea) {
+            textarea.focus();
+            initialFocusRequested = true;
+        }
+    };
+
     const finishSplash = () => {
         if (isFinished) return;
         isFinished = true;
+
+        // Final focus attempt if not done yet
+        requestInitialFocus();
+
         const splash = document.getElementById('splashScreen');
         const main = document.getElementById('mainContent');
         if (!splash || !main) return;
@@ -76,29 +92,10 @@
             main.style.transition = 'none';
             main.classList.add('content-visible');
             main.style.opacity = '1';
-            const textarea = document.getElementById('chatTextarea');
-            if (textarea) textarea.focus();
         } else {
             splash.classList.add('splash-fade-out');
             main.classList.add('content-visible');
-            setTimeout(() => {
-                splash.remove();
-                const textarea = document.getElementById('chatTextarea');
-                if (textarea) {
-                    // On mobile, focus and click can sometimes trigger the keyboard if called 
-                    // right after a user interaction (like drawing or the end of a transition)
-                    textarea.focus();
-                    textarea.click();
-
-                    // Trick for some mobile browsers: create a virtual tap
-                    const event = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    textarea.dispatchEvent(event);
-                }
-            }, 500);
+            setTimeout(() => splash.remove(), 500);
         }
     };
 
@@ -116,17 +113,17 @@
             drawing = true;
             lastX = x;
             lastY = y;
-            // On stoppe l'animation CSS automatique pour prendre le contrôle manuel
-            splashLogo.style.animation = 'none';
-
-            // User hit the screen, perfect moment to request focus for the keyboard
-            const textarea = document.getElementById('chatTextarea');
-            if (textarea) textarea.focus();
+            // On capture le clic pour le clavier sans stopper l'animation CSS si on ne bouge pas
+            requestInitialFocus();
         };
 
         const moveDrawing = (x, y) => {
             if (!drawing) return;
             const dist = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
+            if (dist > 0) {
+                // On stoppe l'animation CSS automatique uniquement si on bouge réellement
+                splashLogo.style.animation = 'none';
+            }
             totalMoved += dist;
             lastX = x;
             lastY = y;
