@@ -1,0 +1,103 @@
+
+=== FOURNISSEURS AVEC ICÔNES INITIALES (NON MAPPÉS) ===
+
+Provider: z-ai
+Modèles:  11
+Premier modèle: Z.ai: GLM 5
+ID du modèle:   z-ai/glm-5
+-----------------------------------
+Provider: sao10k
+Modèles:  5
+Premier modèle: Sao10K: Llama 3.1 70B Hanami x1
+ID du modèle:   sao10k/l3.1-70b-hanami-x1
+-----------------------------------
+Provider: thedrummer
+Modèles:  4
+Premier modèle: TheDrummer: Cydonia 24B V4.1
+ID du modèle:   thedrummer/cydonia-24b-v4.1
+-----------------------------------
+Provider: relace
+Modèles:  2
+Premier modèle: Relace: Relace Search
+ID du modèle:   relace/relace-search
+-----------------------------------
+Provider: morph
+Modèles:  2
+Premier modèle: Morph: Morph V3 Large
+ID du modèle:   morph/morph-v3-large
+-----------------------------------
+Provider: inception
+Modèles:  2
+Premier modèle: Inception: Mercury
+ID du modèle:   inception/mercury
+-----------------------------------
+Provider: neversleep
+Modèles:  2
+Premier modèle: NeverSleep: Lumimaid v0.2 8B
+ID du modèle:   neversleep/llama-3.1-lumimaid-8b
+-----------------------------------
+Provider: nex-agi
+Modèles:  1
+Premier modèle: Nex AGI: DeepSeek V3.1 Nex N1
+ID du modèle:   nex-agi/deepseek-v3.1-nex-n1
+-----------------------------------
+Provider: essentialai
+Modèles:  1
+Premier modèle: EssentialAI: Rnj 1 Instruct
+ID du modèle:   essentialai/rnj-1-instruct
+-----------------------------------
+Provider: kwaipilot
+Modèles:  1
+Premier modèle: Kwaipilot: KAT-Coder-Pro V1
+ID du modèle:   kwaipilot/kat-coder-pro
+-----------------------------------
+Provider: meituan
+Modèles:  1
+Premier modèle: Meituan: LongCat Flash Chat
+ID du modèle:   meituan/longcat-flash-chat
+-----------------------------------
+Provider: switchpoint
+Modèles:  1
+Premier modèle: Switchpoint Router
+ID du modèle:   switchpoint/router
+-----------------------------------
+Provider: cognitivecomputations
+Modèles:  1
+Premier modèle: Venice: Uncensored (free)
+ID du modèle:   cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+-----------------------------------
+Provider: tngtech
+Modèles:  1
+Premier modèle: TNG: DeepSeek R1T2 Chimera
+ID du modèle:   tngtech/deepseek-r1t2-chimera
+-----------------------------------
+Provider: alfredpros
+Modèles:  1
+Premier modèle: AlfredPros: CodeLLaMa 7B Instruct Solidity
+ID du modèle:   alfredpros/codellama-7b-instruct-solidity
+-----------------------------------
+Provider: raifle
+Modèles:  1
+Premier modèle: SorcererLM 8x22B
+ID du modèle:   raifle/sorcererlm-8x22b
+-----------------------------------
+Provider: anthracite-org
+Modèles:  1
+Premier modèle: Magnum v4 72B
+ID du modèle:   anthracite-org/magnum-v4-72b
+-----------------------------------
+Provider: alpindale
+Modèles:  1
+Premier modèle: Goliath 120B
+ID du modèle:   alpindale/goliath-120b
+-----------------------------------
+Provider: undi95
+Modèles:  1
+Premier modèle: ReMM SLERP 13B
+ID du modèle:   undi95/remm-slerp-l2-13b
+-----------------------------------
+Provider: gryphe
+Modèles:  1
+Premier modèle: MythoMax 13B
+ID du modèle:   gryphe/mythomax-l2-13b
+-----------------------------------

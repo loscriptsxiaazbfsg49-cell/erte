@@ -1,0 +1,669 @@
+/* ===== Variables ===== */
+:root {
+    --color-primary: 0 0 0;
+    --color-primary-content: 255 255 255;
+    --color-background-light: 255 255 255;
+    --color-background-subtle: 249 250 251;
+    --color-background-dark: 0 0 0;
+    --color-border-subtle: 229 231 235;
+    --color-text-main: 17 24 39;
+    --color-text-muted: 107 114 128;
+}
+
+html.dark {
+    --color-primary: 255 255 255;
+    --color-primary-content: 0 0 0;
+    --color-background-light: 24 24 27;
+    /* Very dark gray/black */
+    --color-background-subtle: 39 39 42;
+    /* Darker gray for subtle bg */
+    --color-background-dark: 255 255 255;
+    --color-border-subtle: 63 63 70;
+    --color-text-main: 244 244 245;
+    /* Almost white */
+    --color-text-muted: 161 161 170;
+    /* Gray 400 */
+}
+
+/* ===== Base ===== */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* ===== Scrollbar ===== */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-border-subtle));
+    border-radius: 20px;
+}
+
+
+
+/* ===== Left Sidebar ===== */
+.sidebar-collapsed {
+    transform: translateX(-100%);
+    margin-left: -260px;
+    border-right-width: 0 !important;
+}
+
+.sidebar-toggle-btn {
+    position: fixed;
+    top: 14px;
+    z-index: 50;
+    background: rgb(var(--color-background-light));
+    border: 1px solid rgb(var(--color-border-subtle));
+    border-radius: 9999px;
+    width: 36px;
+    height: 36px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgb(var(--color-primary) / 0.08);
+    transition: left 0.3s ease-in-out, background 0.2s, box-shadow 0.2s;
+}
+
+@media (min-width: 768px) {
+    .sidebar-toggle-btn {
+        display: flex;
+    }
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgb(var(--color-background-subtle));
+    box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.12);
+}
+
+/* ===== Splash Screen ===== */
+#splashScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: rgb(var(--color-background-light));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.4s ease;
+}
+
+#splashScreen.splash-fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#mainContent {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+#mainContent.content-visible {
+    opacity: 1;
+}
+
+.splash-stage {
+    position: relative;
+    width: 70vmin;
+    height: 70vmin;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.splash-stage svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: visible;
+    z-index: 1;
+}
+
+.splash-logo-shape {
+    fill: transparent;
+    stroke: rgb(var(--color-primary));
+    stroke-width: 40px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform-box: fill-box;
+    transform-origin: center;
+    stroke-dasharray: var(--length);
+    stroke-dashoffset: var(--length);
+    animation:
+        splashDrawPath 1.5s cubic-bezier(0.5, 0, 0.3, 1) forwards,
+        splashFillIn 0.25s ease-out 1.4s forwards,
+        splashShrinkToBall 0.2s ease-in 2s forwards;
+}
+
+.splash-black-ball {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-color: rgb(var(--color-primary));
+    border-radius: 50%;
+    z-index: 20;
+    transform: scale(0);
+    box-shadow: 0 0 20px rgb(var(--color-primary) / 0.2);
+    animation:
+        splashBallAppear 0.2s ease-in 2s forwards,
+        splashHeartbeat 0.6s ease-in-out 2.25s forwards;
+}
+
+@keyframes splashDrawPath {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes splashFillIn {
+    from {
+        fill: transparent;
+    }
+
+    to {
+        fill: rgb(var(--color-primary));
+        stroke-width: 0;
+    }
+}
+
+@keyframes splashShrinkToBall {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 1;
+    }
+}
+
+@keyframes splashBallAppear {
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes splashHeartbeat {
+
+    0%,
+    60%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgb(var(--color-primary) / 0.1);
+    }
+
+    15%,
+    45% {
+        transform: scale(1.4);
+        box-shadow: 0 0 40px rgb(var(--color-primary) / 0.3);
+    }
+
+    30% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgb(var(--color-primary) / 0.1);
+    }
+}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(72px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ===== Textarea ===== */
+textarea {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+textarea::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== Focus mode ===== */
+.suggestions-hidden {
+    opacity: 0;
+    max-height: 0 !important;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    transform: translateY(16px) scale(0.97);
+}
+
+.title-centered {
+    margin-bottom: 0;
+    transform: translateY(30px);
+}
+
+/* ===== AI Provider Sidebar ===== */
+.provider-logo-btn {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 1.5px solid rgb(var(--color-border-subtle));
+    background: rgb(var(--color-background-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    /* NO overflow:hidden here — it clips the .hover-name tooltip */
+    /* Clip only the icon content inside */
+}
+
+/* Clip the logo/initials area, not the whole button */
+.provider-logo-btn>img,
+.provider-logo-btn>span:not(.hover-name):not(.provider-tooltip):not(.provider-pill-text) {
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.provider-logo-btn:hover {
+    border-color: rgb(var(--color-text-main));
+    box-shadow: 0 4px 16px rgb(var(--color-primary) / 0.18);
+    /* No transform:scale — it creates a CSS stacking context that clips the .hover-name tooltip */
+}
+
+.provider-logo-btn.selected {
+    border-color: rgb(var(--color-text-main));
+    box-shadow: 0 0 0 2px rgb(var(--color-text-main));
+}
+
+.provider-logo-btn img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+html.dark .provider-logo-btn img {
+    filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.8)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.4));
+}
+
+/* Pill buttons for the pyramid layout */
+#pyramidProviders .provider-logo-btn {
+    width: auto;
+    height: 38px;
+    border-radius: 9999px;
+    /* Forme de pilule */
+    padding: 0 16px 0 12px;
+    /* Remplissage pour que ce soit aéré */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* Espace entre le logo et le texte */
+}
+
+#pyramidProviders .provider-logo-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+#pyramidProviders .provider-logo-btn .material-symbols-outlined {
+    font-size: 20px !important;
+}
+
+.provider-pill-text {
+    display: none;
+}
+
+#pyramidProviders .provider-pill-text {
+    display: block;
+}
+
+.provider-tooltip {
+    position: absolute;
+    right: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.92);
+    background: rgb(var(--color-text-main));
+    color: rgb(var(--color-primary-content));
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 6px 14px;
+    border-radius: 10px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 100;
+    box-shadow: 0 0 16px rgb(var(--color-primary) / 0.25), 0 0 40px rgb(var(--color-text-main) / 0.15);
+}
+
+/* Arrow pointing to the right */
+.provider-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: rgb(var(--color-text-main));
+    border-radius: 2px;
+}
+
+.provider-logo-btn:hover .provider-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+}
+
+/* Never show .provider-tooltip inside the pyramid (disposition 2) */
+#pyramidProviders .provider-logo-btn .provider-tooltip,
+#pyramidProviders .provider-logo-btn:hover .provider-tooltip {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* ===== Model selector ===== */
+.model-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.model-item:hover {
+    background: rgb(var(--color-background-subtle));
+}
+
+.model-item.selected {
+    background: rgb(var(--color-background-subtle));
+    font-weight: 600;
+}
+
+#aiProviderSidebar.sidebar-show {
+    display: flex !important;
+    animation: slideInRight 0.3s ease forwards;
+}
+
+/* ===== Extra Simplified Mode (via Context Menu) ===== */
+.extra-simplified-mode #workspaceSection,
+.extra-simplified-mode #topControls,
+.extra-simplified-mode .topbar-divider {
+    display: none !important;
+}
+
+/* ===== Simplified Mode (Now Default) ===== */
+.simplified-mode #suggestionsGrid {
+    display: none !important;
+}
+
+/* Hide disclaimer by default in simplified mode, then show it when conversation starts */
+.simplified-mode .disclaimer {
+    display: none !important;
+}
+
+.simplified-mode.conversation-started .disclaimer {
+    display: block !important;
+}
+
+/* Position input bar in the middle when simplified and no conversation started */
+#inputContainer {
+    transition: padding 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.simplified-mode:not(.conversation-started) #contentArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center !important;
+}
+
+.simplified-mode:not(.conversation-started) #inputContainer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - 30px);
+    bottom: auto;
+    transform: none;
+    z-index: 60;
+    pointer-events: none;
+    transition: none;
+}
+
+/* Allow input area itself to be clickable */
+.simplified-mode:not(.conversation-started) #inputContainer>div {
+    pointer-events: auto;
+}
+
+/* Show title above the centered input bar in simplified mode */
+.simplified-mode:not(.conversation-started) #titleArea {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(50% + 100px);
+    z-index: 61;
+    opacity: 1;
+    pointer-events: none;
+    text-align: center;
+}
+
+/* Model badge: below input bar, aligned right in simplified mode */
+.simplified-mode:not(.conversation-started) #selectedModelBadge {
+    top: auto !important;
+    bottom: -44px !important;
+    left: auto !important;
+    right: 8px !important;
+    transform: none !important;
+}
+
+/* Model selector should appear BELOW input in simplified mode */
+.simplified-mode:not(.conversation-started) #modelSelectorBar {
+    bottom: auto !important;
+}
+
+/* Keep topbar tall enough in simplified mode so title aligns with toggle button */
+.simplified-mode #topBar {
+    min-height: 64px;
+    align-items: center;
+}
+
+/* ===== Page Context Menu ===== */
+#pageContextMenu button,
+#sidebarContextMenu button {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+#pageContextMenu .material-symbols-outlined,
+#sidebarContextMenu .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* ===== Code Block Copy Button ===== */
+.copy-code-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: rgb(var(--color-border-subtle)) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.code-block-wrapper {
+    position: relative;
+}
+
+/* Override hljs theme background to keep our consistent dark bg */
+.code-block-wrapper pre {
+    background: #1e1e2e !important;
+}
+
+.code-block-wrapper code.hljs {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+/* ===== Code Block: Line Numbers (via highlightjs-line-numbers.js plugin) ===== */
+
+/* The <pre> container for numbered blocks */
+.code-pre-num {
+    padding: 0 !important;
+    overflow-x: auto;
+}
+
+/* The plugin renders a <table class="hljs-ln"> inside <code> */
+.hljs-ln {
+    border-collapse: collapse;
+    width: 100%;
+    /* Use min-content so the table grows with code width & enables horizontal scroll */
+    min-width: 100%;
+}
+
+/* Each row = one line */
+.hljs-ln tr {
+    border: none;
+    background: transparent !important;
+}
+
+/* Line number cell */
+.hljs-ln td.hljs-ln-numbers {
+    width: 3em;
+    min-width: 3em;
+    padding: 0 0.75rem 0 0.5rem;
+    text-align: right;
+    vertical-align: top;
+    color: rgba(255, 255, 255, 0.28) !important;
+    font-size: 11px;
+    user-select: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+/* Code content cell */
+.hljs-ln td.hljs-ln-code {
+    padding: 0 3.5rem 0 0.75rem;
+    white-space: pre;
+    vertical-align: top;
+}
+
+/* ===== Fallback flex line numbering (used if plugin unavailable) ===== */
+.code-line-row {
+    display: flex;
+    align-items: flex-start;
+    min-height: 1.6em;
+}
+
+.ln {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 3em;
+    padding-right: 0.75rem;
+    padding-left: 0.25rem;
+    color: rgba(255, 255, 255, 0.28) !important;
+    font-size: 11px;
+    user-select: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.lc {
+    display: inline-block;
+    padding-left: 0.75rem;
+    white-space: pre;
+    flex: 1;
+}
+
+/* Remove old unused rule */
+.code-table {
+    display: initial;
+}
+
+
+/* ===== Horizontal Scrollbar for Code Blocks ===== */
+/* Light mode */
+.code-block-wrapper pre::-webkit-scrollbar {
+    height: 6px;
+}
+
+.code-block-wrapper pre::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 0 0 6px 6px;
+}
+
+.code-block-wrapper pre::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+
+.code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* Firefox */
+.code-block-wrapper pre {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) rgba(255, 255, 255, 0.04);
+}
+
+/* ===== Model Search Modal ===== */
+#modelSearchModal {
+    backdrop-filter: blur(8px);
+}
+
+#modelSearchResults::-webkit-scrollbar {
+    width: 4px;
+}
+
+#modelSearchResults::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border-subtle));
+    border-radius: 10px;
+}
+
+/* ===== Provider Tooltip (géré via JS fixed portal — #providerHoverTooltip) ===== */
+/* Les styles sont définis inline dans showProviderTooltip() en JS pour contourner
+   tous les overflow:hidden/clip des conteneurs parents de la sidebar. */
+
+/* ===== Layout Toggle Buttons (Disposition 1 & 2) ===== */
+/* Both toggle buttons share the same visual style; position is set via JS */

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Motion Design - Transformation Parfaite (Fin Boule)</title>
+    <style>
+        /* 1. FOND BLANC */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .stage {
+            position: relative;
+            width: 70vmin;
+            height: 70vmin;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 2. CONFIGURATION SVG */
+        svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            overflow: visible;
+            z-index: 1;
+        }
+
+        /* 3. LE LOGO NOIR (Tracé A vers Z) */
+        .logo-shape {
+            fill: transparent;
+            /* Commence vide */
+            stroke: #000000;
+            /* Trait noir */
+            stroke-width: 40px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+
+            /* CRUCIAL : Définit le centre de rotation/échelle sur le centre du dessin lui-même */
+            transform-box: fill-box;
+            transform-origin: center;
+
+            /* Variables pour le tracé (JS) */
+            stroke-dasharray: var(--length);
+            stroke-dashoffset: var(--length);
+
+            /* SCÉNARIO D'ANIMATION MODIFIÉ : On arrête après la transformation en boule */
+            animation:
+                drawPath 1.5s cubic-bezier(0.5, 0, 0.3, 1) forwards,
+                /* 1. Tracé */
+                fillIn 0.25s ease-out 1.4s forwards,
+                /* 2. Remplissage */
+                shrinkToBall 0.2s ease-in 2s forwards;
+            /* 3. Transformation en boule (FIN) */
+        }
+
+        /* 4. LA BOULE NOIRE */
+        .black-ball {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: #000000;
+            border-radius: 50%;
+            z-index: 20;
+
+            /* Initialisation : Invisible */
+            transform: scale(0);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+
+            /* SCÉNARIO BOULE MODIFIÉ : On arrête après les battements */
+            animation:
+                ballAppear 0.2s ease-in 2s forwards,
+                /* Apparaît quand le logo disparaît */
+                heartbeat 0.6s ease-in-out 2.25s forwards;
+            /* Battements (FIN) */
+        }
+
+
+        /* ========================
+           KEYFRAMES
+           ======================== */
+
+        /* 1. LE TRACÉ (Signature) */
+        @keyframes drawPath {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* 2. LE REMPLISSAGE */
+        @keyframes fillIn {
+            from {
+                fill: transparent;
+            }
+
+            to {
+                fill: #000000;
+                stroke-width: 0;
+            }
+        }
+
+        /* 3. TRANSITION : LOGO DEVIENT BOULE */
+        @keyframes shrinkToBall {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0);
+                /* Se condense en un point */
+                opacity: 1;
+                /* Reste opaque */
+            }
+        }
+
+        /* 4. TRANSITION : BOULE APPARAÎT */
+        @keyframes ballAppear {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* BATTEMENTS (Animation finale qui reste figée à la fin) */
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            15% {
+                transform: scale(1.4);
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+            }
+
+            30% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            }
+
+            45% {
+                transform: scale(1.4);
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+            }
+
+            60% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="stage">
+        <!-- La Boule (Au centre absolu) -->
+        <div class="black-ball"></div>
+
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660.000000 669.000000"
+            preserveAspectRatio="xMidYMid meet">
+
+            <g transform="translate(0.000000,669.000000) scale(0.100000,-0.100000)">
+                <!-- LE LOGO -->
+                <path id="myLogo" class="logo-shape" d="M3553 5465 c131 -18 267 -48 350 -76 107 -37 283 -125 389 -194 121
+                -80 299 -250 382 -365 121 -168 215 -387 258 -603 29 -145 31 -421 4 -564 -42
+                -228 -93 -353 -233 -563 -88 -132 -371 -513 -669 -900 -82 -107 -162 -212
+                -178 -232 l-28 -37 99 -123 c55 -68 175 -220 268 -338 92 -118 181 -232 197
+                -253 l30 -37 -245 0 -245 0 -154 201 c-84 111 -161 211 -170 223 l-18 21 -17
+                -21 c-10 -12 -87 -110 -171 -218 l-154 -196 -284 0 c-226 0 -284 3 -277 13 4
+                6 82 107 173 222 455 577 521 663 990 1295 366 492 417 564 464 658 127 254
+                151 586 66 901 -31 114 -128 302 -203 396 -153 189 -385 332 -626 386 -112 24
+                -361 26 -481 3 -196 -37 -406 -144 -552 -282 -232 -219 -350 -512 -352 -872
+                -1 -163 21 -289 75 -438 53 -145 117 -244 449 -687 414 -554 532 -717 523
+                -725 -4 -5 -330 -11 -723 -15 l-715 -6 -153 203 -153 203 438 5 c241 3 443 9
+                450 13 8 5 -19 46 -88 130 -236 287 -450 589 -508 719 -44 97 -88 254 -107
+                381 -22 150 -15 409 15 550 101 474 377 834 810 1056 165 84 345 137 586 170
+                102 14 374 12 488 -4z m1389 -3012 l196 -6 -67 -86 c-37 -47 -107 -139 -156
+                -203 l-87 -118 -274 0 c-151 0 -274 3 -274 6 0 3 55 71 123 153 67 81 142 172
+                167 203 l45 57 66 1 c36 0 154 -3 261 -7z" />
+            </g>
+        </svg>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const path = document.getElementById('myLogo');
+            const length = path.getTotalLength();
+            path.style.setProperty('--length', length);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Omegai</title>
+    <link id="favicon" rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "rgb(var(--color-primary) / <alpha-value>)",
+                        "primary-content": "rgb(var(--color-primary-content) / <alpha-value>)",
+                        "background-light": "rgb(var(--color-background-light) / <alpha-value>)",
+                        "background-subtle": "rgb(var(--color-background-subtle) / <alpha-value>)",
+                        "background-dark": "rgb(var(--color-background-dark) / <alpha-value>)",
+                        "border-subtle": "rgb(var(--color-border-subtle) / <alpha-value>)",
+                        "text-main": "rgb(var(--color-text-main) / <alpha-value>)",
+                        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px",
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                        'float': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+                    }
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Line numbers plugin for highlight.js — handles multi-line hljs spans correctly -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+    <link rel="stylesheet" href="styles.css?v=1772770001" />
+    <script>
+        if (localStorage.getItem('openrouter_theme') === 'dark' || (!localStorage.getItem('openrouter_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+
+<body class="bg-background-light text-text-main antialiased h-screen w-full overflow-hidden simplified-mode">
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splash-stage">
+            <div class="splash-black-ball"></div>
+            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660.000000 669.000000"
+                preserveAspectRatio="xMidYMid meet">
+                <g transform="translate(0.000000,669.000000) scale(0.100000,-0.100000)">
+                    <path id="splashLogo" class="splash-logo-shape" d="M3553 5465 c131 -18 267 -48 350 -76 107 -37 283 -125 389 -194 121
+                    -80 299 -250 382 -365 121 -168 215 -387 258 -603 29 -145 31 -421 4 -564 -42
+                    -228 -93 -353 -233 -563 -88 -132 -371 -513 -669 -900 -82 -107 -162 -212
+                    -178 -232 l-28 -37 99 -123 c55 -68 175 -220 268 -338 92 -118 181 -232 197
+                    -253 l30 -37 -245 0 -245 0 -154 201 c-84 111 -161 211 -170 223 l-18 21 -17
+                    -21 c-10 -12 -87 -110 -171 -218 l-154 -196 -284 0 c-226 0 -284 3 -277 13 4
+                    6 82 107 173 222 455 577 521 663 990 1295 366 492 417 564 464 658 127 254
+                    151 586 66 901 -31 114 -128 302 -203 396 -153 189 -385 332 -626 386 -112 24
+                    -361 26 -481 3 -196 -37 -406 -144 -552 -282 -232 -219 -350 -512 -352 -872
+                    -1 -163 21 -289 75 -438 53 -145 117 -244 449 -687 414 -554 532 -717 523
+                    -725 -4 -5 -330 -11 -723 -15 l-715 -6 -153 203 -153 203 438 5 c241 3 443 9
+                    450 13 8 5 -19 46 -88 130 -236 287 -450 589 -508 719 -44 97 -88 254 -107
+                    381 -22 150 -15 409 15 550 101 474 377 834 810 1056 165 84 345 137 586 170
+                    102 14 374 12 488 -4z m1389 -3012 l196 -6 -67 -86 c-37 -47 -107 -139 -156
+                    -203 l-87 -118 -274 0 c-151 0 -274 3 -274 6 0 3 55 71 123 153 67 81 142 172
+                    167 203 l45 57 66 1 c36 0 154 -3 261 -7z" />
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="flex w-full h-full">
+        <aside id="sidebar"
+            class="w-[260px] bg-background-subtle border-r border-border-subtle flex flex-col h-full shrink-0 md:flex overflow-hidden"
+            style="transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease;">
+            <!-- Scrollable Sidebar Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <!-- Logo et Actions principales -->
+                <div class="px-2 pt-4 pb-2 space-y-4">
+                    <div class="pl-1.5 mb-2">
+                        <img src="logo.png" alt="Logo" class="h-8 w-auto cursor-pointer dark:invert" id="mainHomeLogo"
+                            title="Recharger">
+                    </div>
+                    <div class="space-y-0.5">
+                        <button id="newChatBtn"
+                            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group text-left">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="text-text-muted group-hover:text-primary">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            <span>Nouveau chat</span>
+                        </button>
+                        <button id="openSearchBtn"
+                            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group text-left">
+                            <span
+                                class="material-symbols-outlined text-text-muted text-[20px] group-hover:text-primary">search</span>
+                            <span>Rechercher des chats</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Espace de travail (original buttons) -->
+                <div id="workspaceSection" class="px-2 pt-4 pb-1 space-y-0.5">
+                    <div class="px-2 mb-2">
+                        <span class="text-xs font-medium text-text-muted uppercase tracking-wider">Espace de
+                            travail</span>
+                    </div>
+                    <button
+                        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 mb-2 rounded-lg bg-primary text-primary-content dark:bg-background-light/10 dark:text-white dark:border dark:border-white/10 font-medium text-sm hover:bg-primary/90 dark:hover:bg-background-light/20 shadow-md shadow-primary/20 dark:shadow-none transition-all">
+                        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        <span>Créer</span>
+                    </button>
+                    <button
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group w-full text-left">
+                        <span
+                            class="material-symbols-outlined text-text-muted text-[20px] group-hover:text-primary">image</span>
+                        <span>Images</span>
+                    </button>
+                    <button
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group w-full text-left">
+                        <span
+                            class="material-symbols-outlined text-text-muted text-[20px] group-hover:text-primary">apps</span>
+                        <span>Applications</span>
+                    </button>
+                    <button
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group w-full text-left">
+                        <span
+                            class="material-symbols-outlined text-text-muted text-[20px] group-hover:text-primary">folder</span>
+                        <span>Projets</span>
+                    </button>
+                </div>
+
+                <!-- Conversation list -->
+                <div class="px-2 py-2 space-y-1">
+                    <!-- Pinned section -->
+                    <div id="pinnedSection" class="hidden">
+                        <div class="px-2 mb-2 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[14px] text-text-muted">push_pin</span>
+                            <span class="text-xs font-medium text-text-muted uppercase tracking-wider">Épinglés</span>
+                        </div>
+                        <div id="pinnedList" class="space-y-0.5 mb-4"></div>
+                    </div>
+
+                    <!-- Recent section -->
+                    <div id="recentSection">
+                        <div class="px-2 mb-2">
+                            <span class="text-xs font-medium text-text-muted uppercase tracking-wider">Récent</span>
+                        </div>
+                        <div id="conversationList" class="space-y-0.5">
+                            <!-- Loading state -->
+                            <div id="convLoadingState"
+                                class="flex flex-col items-center justify-center py-8 px-4 text-center">
+                                <div
+                                    class="w-5 h-5 border-2 border-border-subtle border-t-primary rounded-full animate-spin mb-3">
+                                </div>
+                                <p class="text-xs text-text-muted">Chargement...</p>
+                            </div>
+                            <!-- Empty state -->
+                            <div id="convEmptyState"
+                                class="hidden flex flex-col items-center justify-center py-8 px-4 text-center">
+                                <div
+                                    class="h-8 w-8 rounded-full bg-background-subtle border border-border-subtle flex items-center justify-center mb-2">
+                                    <span class="material-symbols-outlined text-text-muted text-[16px]">history</span>
+                                </div>
+                                <p class="text-xs text-text-muted">Aucun historique récent</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User profile -->
+            <div class="p-3 border-t border-border-subtle bg-background-subtle flex flex-col gap-3">
+                <button
+                    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm transition-all group">
+                    <div class="h-8 w-8 rounded-full bg-cover bg-center border border-border-subtle shrink-0"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB46WAIT5oOC1aynvv5fMQLNWf11jSTajcHsZIAN9BuZpZPjzk3mREWeGpMCMwQrz4jdnkXQZ8nsKOPkdfH0hGLO6gO6gx9vUXvKIkWhyB4O1msFa89eWNeX1FZH1068Yug6-w7_vggiTCquD7FliVhfoqTJfk6mgdeHTjOBj3Cfq5Tl-_UKDONueiNw1nrtXo-dCM8ZcWbkbzTAMxxB1ImFSrxX7JO_qA8hccn4qVLvdXWMUbIuINAu87gPogTxeGJHBkuiOvqaR_f');">
+                    </div>
+                    <div class="flex flex-col items-start overflow-hidden">
+                        <span class="text-sm font-medium text-text-main truncate w-full">Alex Morgan</span>
+                        <span class="text-xs text-text-muted truncate w-full">alex@example.com</span>
+                    </div>
+                    <span class="material-symbols-outlined ml-auto text-text-muted text-[20px]">settings</span>
+                </button>
+            </div>
+        </aside>
+
+        <button id="sidebarToggle" class="sidebar-toggle-btn" onclick="toggleSidebar()"
+            title="Replier / Déplier le menu">
+            <span class="material-symbols-outlined text-text-muted text-[20px]" id="toggleIcon">menu</span>
+        </button>
+
+        <main class="flex-1 flex flex-col h-full min-h-0 relative bg-background-light">
+            <div
+                class="md:hidden flex items-center justify-between p-4 border-b border-border-subtle bg-background-light z-20">
+                <button id="mobileMenuBtn" onclick="toggleSidebar()"
+                    class="p-2 -ml-2 text-text-muted hover:text-primary">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <span id="mobileConvTitle" class="font-semibold text-text-main">Omegai</span>
+                <button id="newChatBtnMobile" class="p-2 -mr-2 text-text-muted hover:text-primary">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+
+            <!-- Top bar -->
+            <div id="topBar" class="flex justify-center px-4 md:px-0 py-3 shrink-0 relative z-20">
+                <!-- Conversation title — absolute left, does NOT affect centering -->
+                <div id="currentConvTitleArea"
+                    class="hidden items-center gap-1 absolute left-4 md:left-14 top-1/2 -translate-y-1/2">
+                    <span id="currentConvTitle"
+                        class="text-sm font-medium text-text-main truncate max-w-[180px]"></span>
+                    <button id="renameConvBtn"
+                        class="p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors"
+                        title="Renommer">
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                    <button id="convSettingsBtn"
+                        class="p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors"
+                        title="Paramètres">
+                        <span class="material-symbols-outlined text-[16px]">tune</span>
+                    </button>
+                </div>
+                <!-- Quality / Privacy dropdowns (centered, same as original) -->
+                <div id="topControls"
+                    class="bg-background-light/80 backdrop-blur-md border border-border-subtle shadow-soft rounded-full p-1 flex items-center gap-1 transition-all hover:shadow-float hover:border-primary/20">
+                    <div id="qualityDropdown" class="relative">
+                        <button id="qualityBtn"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-background-subtle text-sm font-medium text-text-main transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span>Qualité maximale</span>
+                            <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+                        </button>
+                        <div id="qualityMenu" class="absolute top-full right-0 pt-1 w-48 hidden" style="z-index: 100;">
+                            <div class="bg-background-light border border-border-subtle rounded-xl shadow-float p-1">
+                                <div class="flex flex-col gap-0.5">
+                                    <button
+                                        class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-background-subtle text-sm text-text-main font-medium">
+                                        <span>Qualité maximale</span>
+                                        <span class="material-symbols-outlined text-primary text-[18px]">check</span>
+                                    </button>
+                                    <button
+                                        class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-background-subtle text-sm text-text-muted hover:text-text-main transition-colors">
+                                        <span>Éco</span>
+                                    </button>
+                                    <button
+                                        class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-background-subtle text-sm text-text-muted hover:text-text-main transition-colors">
+                                        <span>Eco Ultra</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-px h-4 bg-border-subtle mx-1 topbar-divider"></div>
+                    <div id="privacyDropdown" class="relative">
+                        <button id="privacyBtn"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-background-subtle text-sm font-medium text-text-main transition-colors">
+                            <span class="material-symbols-outlined text-[18px] text-text-muted">lock</span>
+                            <span>Privé</span>
+                            <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+                        </button>
+                        <div id="privacyMenu" class="absolute top-full right-0 pt-1 w-40 hidden" style="z-index: 100;">
+                            <div class="bg-background-light border border-border-subtle rounded-xl shadow-float p-1">
+                                <div class="flex flex-col gap-0.5">
+                                    <button
+                                        class="flex items-center justify-between px-3 py-2 rounded-lg bg-background-subtle text-sm text-text-main font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">lock</span>
+                                            <span>Privé</span>
+                                        </div>
+                                        <span class="material-symbols-outlined text-primary text-[18px]">check</span>
+                                    </button>
+                                    <button
+                                        class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-background-subtle text-sm text-text-muted hover:text-text-main transition-colors">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">public</span>
+                                            <span>Public</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contentArea"
+                class="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-4xl mx-auto min-h-0 relative">
+                <!-- Chat messages (hidden initially) -->
+                <div id="chatMessagesArea"
+                    class="hidden flex-1 w-full max-w-3xl overflow-y-auto custom-scrollbar px-4 py-4 space-y-4 absolute inset-0 mx-auto"
+                    style="max-width:48rem;">
+                </div>
+                <div id="titleArea" class="mb-4 text-center animate-fade-in-up"
+                    style="transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <h1 class="text-3xl md:text-4xl font-semibold text-text-main tracking-tight">Comment puis-je vous
+                        aider ?</h1>
+                </div>
+                <div id="suggestionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl px-4"
+                    style="transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <button
+                        class="suggestion-card flex flex-col items-start p-4 rounded-2xl border border-border-subtle hover:border-border-subtle hover:bg-background-subtle transition-all duration-200 group text-left bg-background-light shadow-sm hover:shadow-md h-[110px] justify-between">
+                        <div
+                            class="flex items-center gap-2 text-text-main font-semibold group-hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px] fill-1">lightbulb</span>
+                            <span>Écriture Créative</span>
+                        </div>
+                        <p class="text-sm text-text-muted leading-relaxed">Rédigez une histoire de science-fiction sur
+                            un robot jardinier.</p>
+                    </button>
+                    <button
+                        class="suggestion-card flex flex-col items-start p-4 rounded-2xl border border-border-subtle hover:border-border-subtle hover:bg-background-subtle transition-all duration-200 group text-left bg-background-light shadow-sm hover:shadow-md h-[110px] justify-between">
+                        <div
+                            class="flex items-center gap-2 text-text-main font-semibold group-hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">code</span>
+                            <span>Assistant Code</span>
+                        </div>
+                        <p class="text-sm text-text-muted leading-relaxed">Expliquez le fonctionnement du hook useEffect
+                            en React.</p>
+                    </button>
+                    <button
+                        class="suggestion-card flex flex-col items-start p-4 rounded-2xl border border-border-subtle hover:border-border-subtle hover:bg-background-subtle transition-all duration-200 group text-left bg-background-light shadow-sm hover:shadow-md h-[110px] justify-between md:hidden lg:flex">
+                        <div
+                            class="flex items-center gap-2 text-text-main font-semibold group-hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">edit_note</span>
+                            <span>Résumer</span>
+                        </div>
+                        <p class="text-sm text-text-muted leading-relaxed">Résumez cet article en 3 points clés.</p>
+                    </button>
+                    <button
+                        class="suggestion-card flex flex-col items-start p-4 rounded-2xl border border-border-subtle hover:border-border-subtle hover:bg-background-subtle transition-all duration-200 group text-left bg-background-light shadow-sm hover:shadow-md h-[110px] justify-between md:hidden lg:flex">
+                        <div
+                            class="flex items-center gap-2 text-text-main font-semibold group-hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">travel_explore</span>
+                            <span>Planifier un Voyage</span>
+                        </div>
+                        <p class="text-sm text-text-muted leading-relaxed">Créez un itinéraire de 3 jours à Paris pour
+                            un couple.</p>
+                    </button>
+                </div>
+            </div>
+
+            <div id="inputContainer"
+                class="w-full p-4 md:p-6 pb-4 bg-gradient-to-t from-background-light via-background-light to-transparent shrink-0">
+                <div class="max-w-3xl mx-auto w-full relative">
+                    <div id="inputBar"
+                        class="relative flex items-end gap-2 bg-background-subtle border border-border-subtle rounded-[2rem] p-2 pr-2 shadow-sm focus-within:ring-1 focus-within:ring-primary/10 focus-within:border-border-subtle transition-all duration-200">
+                        <button id="attachBtn"
+                            class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors shrink-0 ml-1"
+                            title="Ajouter des fichiers et plus encore">
+                            <span class="material-symbols-outlined text-[22px]">attach_file</span>
+                        </button>
+                        <textarea id="chatTextarea"
+                            class="w-full bg-transparent border-none py-2.5 px-1 text-text-main placeholder:text-text-muted focus:ring-0 resize-none overflow-y-auto flex-1"
+                            placeholder="Envoyer un message..." rows="1" style="height: 44px;"></textarea>
+                        <div class="flex items-center gap-1.5 mr-1 shrink-0">
+                            <!-- Bouton Éditer (Crayon) -->
+                            <button id="editBtn"
+                                class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
+                                title="Modifier">
+                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                            <!-- Bouton Vocale -->
+                            <button
+                                class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
+                                title="Saisie vocale">
+                                <span class="material-symbols-outlined text-[22px]">mic</span>
+                            </button>
+                            <!-- Bouton Envoyer -->
+                            <button id="sendBtn"
+                                class="h-10 w-10 flex items-center justify-center bg-primary text-primary-content rounded-full hover:bg-primary/90 transition-colors shadow-md shadow-primary/20 disabled:opacity-50 disabled:shadow-none">
+                                <span class="material-symbols-outlined text-[20px]">arrow_upward</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pyramid layout for providers (absolutely positioned so it doesn't push the bar up) -->
+                    <div id="pyramidProviders"
+                        class="hidden absolute top-[calc(100%+24px)] left-0 right-0 flex-col items-center w-full transition-all duration-300 z-50">
+                    </div>
+
+                    <div class="text-center mt-4 disclaimer">
+                        <p class="text-xs text-text-muted/80">Omegai peut faire des erreurs. Pensez à vérifier les
+                            informations importantes.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- AI Provider Sidebar (right) -->
+        <aside id="aiProviderSidebar"
+            class="fixed right-0 top-0 h-full w-[72px] bg-background-light/90 backdrop-blur-md border-l border-border-subtle flex-col items-center py-4 hidden"
+            style="z-index: 90; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;">
+            <div id="providerLogoList"
+                class="flex flex-col items-center gap-2 w-full px-2 py-3 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="flex items-center justify-center py-6">
+                    <div class="w-5 h-5 border-2 border-border-subtle border-t-primary rounded-full animate-spin"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Model selector bar (above input) -->
+        <div id="modelSelectorBar" class="fixed hidden" style="z-index: 80; pointer-events: none;">
+            <div class="pointer-events-auto" id="modelSelectorInner">
+                <div id="modelSelectorContent"
+                    class="bg-background-light border border-border-subtle rounded-2xl shadow-float mb-2 p-3 overflow-hidden"
+                    style="transition: all 0.3s ease;">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <img id="selectedProviderLogo" src="" alt="" class="w-6 h-6 rounded-md object-contain" />
+                            <span id="selectedProviderName" class="text-sm font-semibold text-text-main"></span>
+                        </div>
+                        <button id="closeModelSelector"
+                            class="p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                    <div id="modelList" class="flex flex-col gap-1 max-h-[200px] overflow-y-auto custom-scrollbar">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- end mainContent -->
+
+    <!-- Custom context menu for textarea -->
+    <div id="textContextMenu" class="fixed hidden" style="z-index: 200;">
+        <div class="bg-background-light rounded-xl shadow-2xl overflow-hidden border border-border-subtle"
+            style="min-width: 240px;">
+            <div id="contextMenuBar" class="flex items-center justify-between px-3 py-2.5">
+                <button id="improvePromptBtn"
+                    class="flex items-center gap-2.5 text-text-main hover:text-text-muted transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                    <span class="text-sm font-medium">Améliorer le prompt</span>
+                </button>
+                <button id="contextMenuDots" class="p-1 text-text-muted hover:text-text-main rounded transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+            </div>
+            <div id="contextMenuExtended" class="hidden border-t border-border-subtle">
+                <button id="contextCopyBtn"
+                    class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle transition-colors">Copier</button>
+                <button id="contextSelectAllBtn"
+                    class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle transition-colors">Tout
+                    sélectionner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation context menu (right-click on sidebar items) -->
+    <div id="convContextMenu" class="fixed hidden" style="z-index: 300;">
+        <div class="bg-background-light border border-border-subtle rounded-xl shadow-float overflow-hidden"
+            style="min-width: 200px;">
+            <button id="ctxRename"
+                class="conv-ctx-item w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-text-muted">edit</span>Renommer
+            </button>
+            <button id="ctxPin"
+                class="conv-ctx-item w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-text-muted">push_pin</span><span
+                    id="ctxPinLabel">Épingler</span>
+            </button>
+            <button id="ctxSettings"
+                class="conv-ctx-item w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-text-muted">tune</span>Paramètres
+            </button>
+            <div class="border-t border-border-subtle my-1"></div>
+            <button id="ctxDelete"
+                class="conv-ctx-item w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">delete</span>Supprimer
+            </button>
+        </div>
+    </div>
+
+    <!-- Rename modal -->
+    <div id="renameModal" class="fixed inset-0 flex items-center justify-center hidden"
+        style="z-index: 400; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+        <div class="bg-background-light rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-fade-in-up">
+            <h3 class="text-base font-semibold text-text-main mb-4">Renommer la conversation</h3>
+            <input id="renameInput" type="text"
+                class="w-full px-4 py-2.5 border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-border-subtle transition-all"
+                placeholder="Nom de la conversation" />
+            <div class="flex gap-2 mt-4">
+                <button id="renameCancelBtn"
+                    class="flex-1 px-4 py-2 rounded-xl border border-border-subtle text-sm text-text-muted hover:bg-background-subtle transition-colors">Annuler</button>
+                <button id="renameConfirmBtn"
+                    class="flex-1 px-4 py-2 rounded-xl bg-primary text-primary-content text-sm hover:bg-primary/90 transition-colors">Renommer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation settings modal -->
+    <div id="convSettingsModal" class="fixed inset-0 flex items-center justify-center hidden"
+        style="z-index: 400; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+        <div class="bg-background-light rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-fade-in-up">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+                <h3 class="text-base font-semibold text-text-main">Paramètres de la conversation</h3>
+                <button id="closeConvSettings"
+                    class="p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div class="px-6 py-4 space-y-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <!-- Info -->
+                <div class="space-y-3">
+                    <label class="text-xs font-semibold text-text-muted uppercase tracking-wider">Informations</label>
+                    <div class="bg-background-subtle rounded-xl p-4 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-text-muted">Créée le</span>
+                            <span id="settingsCreatedAt" class="text-sm font-medium text-text-main">—</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-text-muted">Messages</span>
+                            <span id="settingsMsgCount" class="text-sm font-medium text-text-main">—</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-text-muted">Modèle actuel</span>
+                            <span id="settingsModel"
+                                class="text-sm font-medium text-text-main truncate max-w-[160px]">—</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-text-muted uppercase tracking-wider">Titre</label>
+                    <input id="settingsTitleInput" type="text"
+                        class="w-full px-4 py-2.5 border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-border-subtle transition-all"
+                        placeholder="Nom de la conversation" />
+                </div>
+                <!-- System prompt -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-text-muted uppercase tracking-wider">Prompt système</label>
+                    <textarea id="settingsSystemPrompt"
+                        class="w-full px-4 py-2.5 border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-border-subtle transition-all resize-none"
+                        rows="3"
+                        placeholder="Instructions supplémentaires pour l'IA dans cette conversation..."></textarea>
+                </div>
+                <!-- Pin toggle -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-text-main">Épingler la conversation</div>
+                        <div class="text-xs text-text-muted">Apparaît en haut de la liste</div>
+                    </div>
+                    <button id="settingsPinToggle"
+                        class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none bg-background-subtle"
+                        role="switch" aria-checked="false">
+                        <span
+                            class="absolute left-0.5 top-0.5 w-5 h-5 bg-background-light rounded-full shadow transition-transform duration-200 translate-x-0"
+                            id="settingsPinKnob"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-border-subtle flex justify-between items-center">
+                <button id="settingsDeleteBtn"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 transition-colors border border-red-200">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>Supprimer
+                </button>
+                <div class="flex gap-2">
+                    <button id="settingsCancelBtn"
+                        class="px-4 py-2 rounded-xl border border-border-subtle text-sm text-text-muted hover:bg-background-subtle transition-colors">Annuler</button>
+                    <button id="settingsSaveBtn"
+                        class="px-4 py-2 rounded-xl bg-primary text-primary-content text-sm hover:bg-primary/90 transition-colors">Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete confirmation modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 flex items-center justify-center hidden"
+        style="z-index: 500; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+        <div class="bg-background-light rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-fade-in-up">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-red-600 text-[20px]">delete</span>
+                </div>
+                <h3 class="text-base font-semibold text-text-main">Supprimer la conversation ?</h3>
+            </div>
+            <p class="text-sm text-text-muted mb-5">Cette action est irréversible. Tous les messages seront supprimés.
+            </p>
+            <div class="flex gap-2">
+                <button id="deleteCancelBtn"
+                    class="flex-1 px-4 py-2 rounded-xl border border-border-subtle text-sm text-text-muted hover:bg-background-subtle transition-colors">Annuler</button>
+                <button id="deleteConfirmBtn"
+                    class="flex-1 px-4 py-2 rounded-xl bg-red-600 text-primary-content text-sm hover:bg-red-700 transition-colors">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Éditeur de Prompt Modal -->
+    <div id="draftModal" class="fixed inset-0 flex items-center justify-center hidden"
+        style="z-index: 700; background: rgba(0,0,0,0.45);">
+        <div
+            class="bg-background-light rounded-2xl shadow-xl w-full max-w-5xl h-[85vh] mx-4 flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+                <h3 class="text-lg font-semibold text-text-main flex items-center gap-2">
+                    <span class="material-symbols-outlined text-text-muted text-[22px]">edit_note</span>
+                    Éditeur de prompt
+                </h3>
+                <button id="closeDraftBtn"
+                    class="text-text-muted hover:text-text-main transition-colors flex items-center justify-center h-8 w-8 rounded-full hover:bg-background-subtle">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="flex-1 p-6 relative bg-background-subtle">
+                <textarea id="draftTextarea"
+                    class="w-full h-full bg-background-light border border-border-subtle shadow-sm rounded-xl p-5 text-text-main text-lg placeholder:text-text-muted focus:ring-1 focus:ring-primary/20 focus:border-border-subtle resize-none overflow-y-auto"
+                    placeholder="Rédigez votre message ici en plein écran..."></textarea>
+            </div>
+            <div class="px-6 py-4 border-t border-border-subtle flex justify-end gap-3 bg-background-light">
+                <button id="draftSendBtn"
+                    class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 shadow-md shadow-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+                    Envoyer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Search Modal -->
+    <div id="searchModal" class="fixed inset-0 flex items-start justify-center pt-20 hidden"
+        style="z-index: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+        <div class="bg-background-light rounded-2xl shadow-2xl w-full max-w-xl mx-4 overflow-hidden animate-fade-in-up">
+            <div class="flex items-center gap-3 px-4 py-4 border-b border-border-subtle">
+                <span class="material-symbols-outlined text-text-muted">search</span>
+                <input id="globalSearchInput" type="text"
+                    class="flex-1 bg-transparent border-none text-base text-text-main placeholder:text-text-muted focus:ring-0"
+                    placeholder="Rechercher des conversations..." />
+                <div
+                    class="flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-border-subtle bg-background-subtle text-[10px] text-text-muted font-medium">
+                    ESC</div>
+            </div>
+            <div id="searchResults" class="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
+                <!-- Les résultats apparaîtront ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Context Menu -->
+    <div id="pageContextMenu" class="fixed hidden" style="z-index: 500;">
+        <div class="bg-background-light border border-border-subtle rounded-xl shadow-float overflow-hidden"
+            style="min-width: 220px;">
+            <button id="ctxSimplify"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">auto_awesome_motion</span>
+                <span id="simplifyLabel">Simplifier</span>
+            </button>
+            <button id="ctxRestore"
+                class="hidden w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">history</span>
+                <span>Revenir en arrière</span>
+            </button>
+            <div id="ctxSettingsDivider" class="border-t border-border-subtle"></div>
+            <button id="ctxThemeToggle"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted transition-transform duration-300"
+                    id="themeIcon">dark_mode</span>
+                <span id="themeLabel">Mode sombre</span>
+            </button>
+            <button id="ctxToolbox"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">construction</span>
+                <span>Boîte à outils</span>
+            </button>
+            <button id="ctxRedirectSettings"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">settings</span>
+                <span>Plus de paramètres</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Context Menu -->
+    <div id="sidebarContextMenu" class="fixed hidden" style="z-index: 500;">
+        <div class="bg-background-light border border-border-subtle rounded-xl shadow-float overflow-hidden"
+            style="min-width: 220px;">
+            <button id="ctxChangeLayout"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">dashboard_customize</span>
+                <span>Changer la disposition</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Menu contextuel Outils (bouton trombone) -->
+    <div id="toolsContextMenu" class="fixed hidden" style="z-index: 560;">
+        <div class="bg-background-light border border-border-subtle rounded-xl shadow-float" style="min-width: 260px;">
+            <button id="toolsAddFiles"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors rounded-t-xl">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">attachment</span>
+                <span>Ajouter photos/fichiers</span>
+            </button>
+            <button id="toolsReflexion"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">lightbulb</span>
+                <span>Réflexion</span>
+            </button>
+            <button id="toolsDeepSearch"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">manage_search</span>
+                <span>Recherche approfondie</span>
+            </button>
+            <button id="toolsShopping"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">shopping_bag</span>
+                <span>Assistant shopping</span>
+            </button>
+            <button id="toolsWebSearch"
+                class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[20px] text-text-muted">language</span>
+                <span>Recherche sur le Web</span>
+            </button>
+            <div class="border-t border-border-subtle"></div>
+            <div id="toolsMoreWrapper" class="relative">
+                <button id="toolsMoreBtn"
+                    class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors rounded-b-xl justify-between">
+                    <span class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[20px] text-text-muted">more_horiz</span>
+                        <span>Plus</span>
+                    </span>
+                    <span class="material-symbols-outlined text-[14px] text-text-muted">chevron_right</span>
+                </button>
+                <!-- Sous-menu Plus -->
+                <div id="toolsSubMenu" class="absolute hidden" style="left: 100%; bottom: 0; min-width: 220px;">
+                    <div class="bg-background-light border border-border-subtle rounded-xl shadow-float ml-1">
+                        <button id="toolsStudy"
+                            class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors rounded-t-xl">
+                            <span class="material-symbols-outlined text-[20px] text-text-muted">school</span>
+                            <span>Étudier et apprendre</span>
+                        </button>
+                        <button id="toolsCanvas"
+                            class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-[20px] text-text-muted">draw</span>
+                            <span>Canevas</span>
+                        </button>
+                        <button id="toolsQuizzes"
+                            class="w-full text-left px-4 py-3 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors rounded-b-xl">
+                            <span class="material-symbols-outlined text-[20px] text-text-muted">quiz</span>
+                            <span>Quizzes</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Response Context Menu (clic droit sur une réponse) -->
+    <div id="aiResponseContextMenu" class="fixed hidden" style="z-index: 550;">
+        <div class="bg-background-light border border-border-subtle rounded-xl shadow-float" style="min-width: 200px;">
+            <button id="aiCtxCopy"
+                class="w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-text-muted">content_copy</span>
+                <span>Copier</span>
+            </button>
+            <div class="border-t border-border-subtle"></div>
+            <div id="aiCtxOptionsWrapper" class="relative">
+                <button id="aiCtxOptions"
+                    class="w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors justify-between">
+                    <span class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[18px] text-text-muted">tune</span>
+                        <span>Options</span>
+                    </span>
+                    <span class="material-symbols-outlined text-[14px] text-text-muted">chevron_right</span>
+                </button>
+                <!-- Sous-menu Options -->
+                <div id="aiCtxSubMenu" class="absolute hidden" style="left: 100%; top: 0; min-width: 200px;">
+                    <div
+                        class="bg-background-light border border-border-subtle rounded-xl shadow-float overflow-hidden ml-1">
+                        <button id="aiCtxSummarize"
+                            class="w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-[18px] text-text-muted">summarize</span>
+                            <span>Résumer</span>
+                        </button>
+                        <button id="aiCtxHumanize"
+                            class="w-full text-left px-4 py-2.5 text-sm text-text-main hover:bg-background-subtle flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-[18px] text-text-muted">edit_note</span>
+                            <span>Humaniser</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de recherche web globale (deux boutons souris) -->
+    <div id="webSearchOverlay" class="fixed inset-0 hidden"
+        style="z-index: 700; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);">
+        <div class="flex flex-col items-center pt-8 w-full h-full">
+            <div id="webSearchBox"
+                class="bg-background-light rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden animate-fade-in-up border border-border-subtle">
+                <!-- Barre d'entrée -->
+                <div class="flex items-center gap-3 px-5 py-4 border-b border-border-subtle">
+                    <span class="material-symbols-outlined text-primary text-[22px]">travel_explore</span>
+                    <input id="webSearchInput" type="text"
+                        class="flex-1 bg-transparent border-none text-base text-text-main placeholder:text-text-muted focus:ring-0 outline-none"
+                        placeholder="Rechercher sur le web..." autocomplete="off" />
+                    <button id="closeWebSearch"
+                        class="p-1.5 rounded-lg hover:bg-background-subtle text-text-muted transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+                <!-- Zone de résultats -->
+                <div id="webSearchResults" class="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <!-- Résultats sponsorisés -->
+                    <div id="sponsoredResults" class="p-3 border-b border-border-subtle hidden">
+                        <div class="flex items-center gap-1.5 mb-2 px-1">
+                            <span class="material-symbols-outlined text-[14px] text-amber-500">star</span>
+                            <span
+                                class="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">Sponsorisé</span>
+                        </div>
+                        <div id="sponsoredList" class="space-y-1">
+                            <!-- Items sponsorisés injectés ici -->
+                        </div>
+                    </div>
+                    <!-- Résultats organiques -->
+                    <div id="organicResults" class="p-3 space-y-1">
+                        <div class="flex flex-col items-center justify-center py-12 text-text-muted">
+                            <span class="material-symbols-outlined text-[36px] mb-2">search</span>
+                            <span class="text-sm">Tapez votre recherche pour commencer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="splash.js?v=1772650147"></script>
+    <script src="app.js?v=1772770001"></script>
+</body>
+
+</html>
