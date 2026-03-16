@@ -75,9 +75,13 @@
         if (initialFocusRequested || window.innerWidth >= 768) return;
         const textarea = document.getElementById('chatTextarea');
         if (textarea) {
-            textarea.classList.remove('capturing-focus');
-            textarea.focus();
-            textarea.click();
+            // If the user already clicked the proxy, the browser 
+            // will focus it naturally. We only force it at the end.
+            if (textarea.classList.contains('capturing-focus')) {
+                textarea.classList.remove('capturing-focus');
+                textarea.focus();
+                textarea.click();
+            }
             initialFocusRequested = true;
         }
     };
@@ -106,9 +110,12 @@
         } else {
             splash.classList.add('splash-fade-out');
             main.classList.add('content-visible');
-            // Immediate focus attempt right after visibility classes are applied
-            requestInitialFocus();
-            setTimeout(() => splash.remove(), 500);
+
+            // If no user click happened during splash, we still want the cursor visually
+            setTimeout(() => {
+                if (!initialFocusRequested) requestInitialFocus();
+                splash.remove();
+            }, 500);
         }
     };
 
