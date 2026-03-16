@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Omegai</title>
     <link id="favicon" rel="icon" type="image/png" href="logo.png" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -206,6 +206,11 @@
                 </button>
             </div>
         </aside>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebarOverlay"
+            class="fixed inset-0 bg-black/40 backdrop-blur-md z-[150] hidden md:hidden transition-opacity duration-300 opacity-0">
+        </div>
 
         <button id="sidebarToggle" class="sidebar-toggle-btn" onclick="toggleSidebar()"
             title="Replier / Déplier le menu">

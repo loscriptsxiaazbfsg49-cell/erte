@@ -76,6 +76,52 @@ body {
     }
 }
 
+/* Mobile adjustments */
+@media (max-width: 767px) {
+    #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 200;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-collapsed {
+        transform: translateX(-100%) !important;
+        margin-left: 0 !important;
+    }
+
+    .sidebar-toggle-btn {
+        display: flex !important;
+        /* Force visibility on mobile */
+        z-index: 250 !important;
+        /* Above sidebar (200) and overlay (150) */
+        background: rgb(var(--color-background-light));
+    }
+
+    #mainContent {
+        overflow: hidden;
+    }
+
+    #contentArea {
+        padding-top: 60px;
+        /* Space for mobile header */
+    }
+
+    /* Sidebar overlay animations */
+    #sidebarOverlay.show {
+        display: block !important;
+        opacity: 1;
+    }
+
+    /* Hide circular toggle when collapsed on mobile (use hamburger instead) */
+    .sidebar-collapsed~.sidebar-toggle-btn {
+        display: none !important;
+    }
+}
+
 .sidebar-toggle-btn:hover {
     background: rgb(var(--color-background-subtle));
     box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.12);
@@ -96,6 +142,11 @@ body {
 #splashScreen.splash-fade-out {
     opacity: 0;
     pointer-events: none;
+}
+
+#splashScreen {
+    touch-action: none;
+    /* Prevent scrolling/zooming while drawing */
 }
 
 #mainContent {

@@ -458,6 +458,7 @@ function setActiveConvInSidebar(id) {
 
 // ===== OPEN CONVERSATION =====
 async function openConversation(id) {
+    if (window.innerWidth < 768 && !$('sidebar').classList.contains('sidebar-collapsed')) toggleSidebar();
     if (state.currentConversationId === id) return;
 
     const conv = state.conversations.find(c => c.id === id);
@@ -530,6 +531,7 @@ function restoreModel(modelId) {
 
 // ===== START NEW CHAT =====
 function startNewChat() {
+    if (window.innerWidth < 768 && !$('sidebar').classList.contains('sidebar-collapsed')) toggleSidebar();
     state.currentConversationId = null;
     state.chatMessages = [];
     state.conversationStarted = false;
@@ -1813,15 +1815,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function toggleSidebar() {
-    const sidebar = $('sidebar'), icon = $('toggleIcon'), btn = $('sidebarToggle');
+    const sidebar = $('sidebar'), icon = $('toggleIcon'), btn = $('sidebarToggle'), overlay = $('sidebarOverlay');
     const collapsed = sidebar.classList.toggle('sidebar-collapsed');
     icon.textContent = collapsed ? 'menu_open' : 'menu';
     btn.style.left = collapsed ? '12px' : '268px';
+
+    // Manage overlay on mobile
+    if (window.innerWidth < 768) {
+        if (!collapsed) {
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('show'), 10);
+        } else {
+            overlay.classList.remove('show');
+            setTimeout(() => { if (sidebar.classList.contains('sidebar-collapsed')) overlay.classList.add('hidden'); }, 300);
+        }
+    }
 }
+
+// Initialiser l'overlay pour fermer la sidebar
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = $('sidebarOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            if (!$('sidebar').classList.contains('sidebar-collapsed')) {
+                toggleSidebar();
+            }
+        });
+    }
+});
 
 function initSidebar() {
     const sidebar = $('sidebar'), btn = $('sidebarToggle');
-    if (sidebar && btn && !sidebar.classList.contains('sidebar-collapsed')) btn.style.left = '268px';
+    if (window.innerWidth < 768) {
+        sidebar.classList.add('sidebar-collapsed');
+        if (btn) btn.style.left = '12px';
+        const icon = $('toggleIcon');
+        if (icon) icon.textContent = 'menu_open';
+    } else {
+        if (sidebar && btn && !sidebar.classList.contains('sidebar-collapsed')) btn.style.left = '268px';
+    }
 }
 
 function initDropdowns() {
