@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Omegai</title>
     <link rel="manifest" href="manifest.json">
     <link id="favicon" rel="icon" type="image/png" href="logo.png" />
@@ -380,7 +381,8 @@
                         </button>
                         <textarea id="chatTextarea"
                             class="w-full bg-transparent border-none py-2.5 px-1 text-text-main placeholder:text-text-muted focus:ring-0 resize-none overflow-y-auto flex-1"
-                            placeholder="Envoyer un message..." rows="1" style="height: 44px;"></textarea>
+                            placeholder="Envoyer..." rows="1" style="height: 44px;" inputmode="text" enterkeyhint="send"
+                            autocapitalize="sentences"></textarea>
                         <div class="flex items-center gap-1.5 mr-1 shrink-0">
                             <!-- Bouton Éditer (Crayon) -->
                             <button id="editBtn"

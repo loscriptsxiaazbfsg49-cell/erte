@@ -83,9 +83,21 @@
             main.classList.add('content-visible');
             setTimeout(() => {
                 splash.remove();
-                // Focus input and open keyboard
                 const textarea = document.getElementById('chatTextarea');
-                if (textarea) textarea.focus();
+                if (textarea) {
+                    // On mobile, focus and click can sometimes trigger the keyboard if called 
+                    // right after a user interaction (like drawing or the end of a transition)
+                    textarea.focus();
+                    textarea.click();
+
+                    // Trick for some mobile browsers: create a virtual tap
+                    const event = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    textarea.dispatchEvent(event);
+                }
             }, 500);
         }
     };
@@ -106,6 +118,10 @@
             lastY = y;
             // On stoppe l'animation CSS automatique pour prendre le contrôle manuel
             splashLogo.style.animation = 'none';
+
+            // User hit the screen, perfect moment to request focus for the keyboard
+            const textarea = document.getElementById('chatTextarea');
+            if (textarea) textarea.focus();
         };
 
         const moveDrawing = (x, y) => {

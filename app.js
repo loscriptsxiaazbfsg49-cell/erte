@@ -1858,9 +1858,31 @@ function initMobileOptimizations() {
             skipBtn.onclick = () => {
                 modal.classList.add('hidden');
                 localStorage.setItem('installPromptSkipped', 'true');
+                const textarea = document.getElementById('chatTextarea');
+                if (textarea) textarea.focus();
             };
         }
 
+        // Logic to move input bar above keyboard for browsers like Chrome Mobile
+        if (window.visualViewport) {
+            const viewport = window.visualViewport;
+            const handleVisualViewportResize = () => {
+                const inputContainer = document.getElementById('inputContainer');
+                if (!inputContainer) return;
+
+                const offset = window.innerHeight - viewport.height;
+                // If keyboard is likely open (offset > threshold)
+                // We use transform to skip Layout/Paint cycles and be smooth
+                if (offset > 60) {
+                    inputContainer.style.bottom = `${offset}px`;
+                } else {
+                    inputContainer.style.bottom = '0px';
+                }
+            };
+
+            viewport.addEventListener('resize', handleVisualViewportResize);
+            viewport.addEventListener('scroll', handleVisualViewportResize);
+        }
         // Swipe gesture to open/close sidebar
         let touchStartX = 0;
         let touchEndX = 0;
