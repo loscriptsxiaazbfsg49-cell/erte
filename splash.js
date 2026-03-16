@@ -57,6 +57,11 @@
     }
 
     const SPLASH_DURATION = sessionStorage.getItem('skipSplash') ? 0 : 2850;
+
+    // Method 1: Try to grab initial focus as early as possible
+    const hiddenInput = document.getElementById('hiddenFocusInput');
+    if (hiddenInput) hiddenInput.focus();
+
     if (sessionStorage.getItem('skipSplash')) {
         sessionStorage.removeItem('skipSplash');
     }
