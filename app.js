@@ -1121,8 +1121,8 @@ function initAIProviders() {
         });
         elements.push(desel);
 
-        // Model search button for pyramid layout — appears after "Aucun modèle"
-        if (isPyramid) {
+        // Model search button for pyramid layout OU mobile horizontal sidebar — appears after "Aucun modèle"
+        if (isPyramid || window.innerWidth < 768) {
             const searchPillBtn = document.createElement('button');
             searchPillBtn.className = 'provider-logo-btn shrink-0';
             searchPillBtn.dataset.slug = '__search__';
@@ -1130,7 +1130,14 @@ function initAIProviders() {
             searchPillBtn.innerHTML = `<span class="material-symbols-outlined text-[20px] text-text-muted" style="display:flex;align-items:center;justify-content:center;">search</span>
                 <span class="provider-pill-text text-[13px] font-medium text-text-main whitespace-nowrap">Rechercher</span>
                 <span class="provider-tooltip">Rechercher un modèle</span>`;
-            searchPillBtn.addEventListener('click', () => openModelSearchModal());
+            searchPillBtn.addEventListener('click', () => {
+                openModelSearchModal();
+                if (window.innerWidth < 768) {
+                    // Close the horizontal providers bar on mobile after selecting search
+                    sidebarEl.classList.add('hidden');
+                    sidebarEl.classList.remove('sidebar-show');
+                }
+            });
             elements.push(searchPillBtn);
         }
 
@@ -1427,23 +1434,7 @@ function initAIProviders() {
         });
         modelListEl.innerHTML = ''; modelListEl.appendChild(frag);
 
-        // Add Search Button for Mobile next to the provider name in the header
-        if (window.innerWidth < 768) {
-            let mobileSearchBtn = modelBar.querySelector('#mobileModelSearchBtn');
-            if (!mobileSearchBtn) {
-                mobileSearchBtn = document.createElement('button');
-                mobileSearchBtn.id = 'mobileModelSearchBtn';
-                mobileSearchBtn.className = 'p-1.5 text-text-muted hover:text-primary transition-colors flex items-center justify-center';
-                mobileSearchBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">search</span>';
-                mobileSearchBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    modelBar.classList.add('hidden');
-                    openModelSearchModal();
-                };
-                // Insert before the close button
-                closeBtn.parentNode.insertBefore(mobileSearchBtn, closeBtn);
-            }
-        }
+        // On mobile, the search button is now in the horizontal provider list
     }
 
     closeBtn.addEventListener('click', () => {

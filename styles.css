@@ -129,8 +129,9 @@ body {
         left: 0 !important;
         right: 0 !important;
         transform: translateY(-50%) !important;
-        margin: 0 !important;
-        padding: 0 40px !important;
+        padding: 0 !important;
+        /* No padding to avoid wrap */
+        /* Reduced margins */
         bottom: auto !important;
         z-index: 61 !important;
         display: flex !important;
@@ -141,14 +142,15 @@ body {
     }
 
     #titleArea h1 {
-        font-size: 1.4rem !important;
-        /* Slightly increased */
-        line-height: 1.4 !important;
+        font-size: 1.8rem !important;
+        line-height: normal !important;
         text-align: center !important;
-        max-width: 280px !important;
+        max-width: none !important;
         margin: 0 auto !important;
         width: 100% !important;
         display: block !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
     }
 
     /* Input positioning on mobile: Visible at the bottom with enough margin */
@@ -273,13 +275,16 @@ body {
         display: none !important;
     }
 
-    /* Position badge ABOVE the input bar on mobile */
-    .simplified-mode:not(.conversation-started) #selectedModelBadge {
-        top: -50px !important;
+    /* Position badge ABOVE the input bar on mobile (Corrected Specifity) */
+    body.simplified-mode:not(.conversation-started) #selectedModelBadge,
+    body.conversation-started #selectedModelBadge,
+    body #selectedModelBadge {
+        top: -46px !important;
         bottom: auto !important;
-        right: 16px !important;
-        left: auto !important;
-        transform: none !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        right: auto !important;
+        z-index: 110 !important;
     }
 
     /* Hide layout toggle buttons on mobile */
