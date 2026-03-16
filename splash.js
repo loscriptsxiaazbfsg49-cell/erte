@@ -90,18 +90,10 @@
                 splash.remove();
                 const textarea = document.getElementById('chatTextarea');
                 if (textarea) {
-                    // On mobile, focus and click can sometimes trigger the keyboard if called 
-                    // right after a user interaction (like drawing or the end of a transition)
                     textarea.focus();
-                    textarea.click();
-
-                    // Trick for some mobile browsers: create a virtual tap
-                    const event = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    textarea.dispatchEvent(event);
+                    if (navigator.virtualKeyboard) {
+                        navigator.virtualKeyboard.show();
+                    }
                 }
             }, 500);
         }
@@ -124,9 +116,23 @@
             // On stoppe l'animation CSS automatique pour prendre le contrôle manuel
             splashLogo.style.animation = 'none';
 
-            // User hit the screen, perfect moment to request focus for the keyboard
+            // CRITICAL: User Gesture starts here. 
+            // We must request focus and keyboard RIGHT NOW.
             const textarea = document.getElementById('chatTextarea');
-            if (textarea) textarea.focus();
+            if (textarea) {
+                // Temporary minimal opacity to make it "visible" for the browser's focus engine
+                const main = document.getElementById('mainContent');
+                if (main && getComputedStyle(main).opacity === '0') {
+                    main.style.opacity = '0.01';
+                }
+
+                textarea.focus();
+
+                // Method 3 (New): VirtualKeyboard API for modern Chromium (Chrome, Opera, Edge)
+                if (navigator.virtualKeyboard) {
+                    navigator.virtualKeyboard.show();
+                }
+            }
         };
 
         const moveDrawing = (x, y) => {
