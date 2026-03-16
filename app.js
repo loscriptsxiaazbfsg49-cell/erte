@@ -1796,8 +1796,57 @@ function handleGlobalSearch() {
     });
 }
 
+// ===== MOBILE INSTALL PROMPT =====
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+function initMobileOptimizations() {
+    if (window.innerWidth < 768) {
+        // Remove placeholder
+        const ta = $('chatTextarea');
+        if (ta) ta.placeholder = '';
+
+        // Handle Install Modal
+        const modal = $('installModal');
+        const confirmBtn = $('confirmInstallBtn');
+        const skipBtn = $('skipInstallBtn');
+
+        if (modal && !localStorage.getItem('installPromptSkipped')) {
+            // Show after a delay (after splash)
+            setTimeout(() => {
+                modal.classList.remove('hidden');
+            }, 3500);
+        }
+
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                modal.classList.add('hidden');
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                } else {
+                    // Fallback guidance
+                    alert("Pour installer l'application, ouvrez le menu de votre navigateur et sélectionnez 'Ajouter à l'écran d'accueil'.");
+                }
+            };
+        }
+
+        if (skipBtn) {
+            skipBtn.onclick = () => {
+                modal.classList.add('hidden');
+                localStorage.setItem('installPromptSkipped', 'true');
+            };
+        }
+    }
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
+    initMobileOptimizations();
     initSidebar();
     initDropdowns();
     initFocusMode();

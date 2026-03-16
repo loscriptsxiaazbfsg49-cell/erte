@@ -120,6 +120,55 @@ body {
     .sidebar-collapsed~.sidebar-toggle-btn {
         display: none !important;
     }
+
+    /* Input positioning on mobile (always at bottom) */
+    .simplified-mode:not(.conversation-started) #contentArea {
+        justify-content: flex-end !important;
+    }
+
+    .simplified-mode:not(.conversation-started) #inputContainer {
+        position: relative !important;
+        top: auto !important;
+        bottom: 0 !important;
+        pointer-events: auto !important;
+        padding-bottom: 20px !important;
+    }
+
+    .simplified-mode:not(.conversation-started) #titleArea {
+        position: relative !important;
+        bottom: auto !important;
+        margin-top: auto !important;
+        margin-bottom: 20px !important;
+    }
+
+    #titleArea h1 {
+        font-size: 1.5rem !important;
+        /* Smaller text on mobile */
+    }
+
+    /* Thinner input bar on mobile */
+    #inputBar {
+        padding: 4px 6px !important;
+        border-radius: 1.5rem !important;
+    }
+
+    #chatTextarea {
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 14px !important;
+        height: 36px !important;
+        /* Force thinner height on mobile */
+        min-height: 36px !important;
+    }
+
+    #inputBar button {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    #inputBar button span {
+        font-size: 18px !important;
+    }
 }
 
 .sidebar-toggle-btn:hover {
