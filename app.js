@@ -2985,6 +2985,64 @@ function initRealtime() {
         });
 }
 
+// ===== GLOBAL NOTIFICATIONS =====
+const globalNotifChannel = sb.channel('omega-global-notifications');
+globalNotifChannel.on('broadcast', { event: 'custom-notification' }, (payload) => {
+    if (payload.payload && payload.payload.message) {
+        showGlobalNotification(payload.payload.message);
+    }
+}).subscribe();
+
+window.promptGlobalNotification = function () {
+    const text = prompt("Entrez le texte de la notification globale à envoyer à TOUS les utilisateurs :");
+    if (text && text.trim()) {
+        globalNotifChannel.send({
+            type: 'broadcast',
+            event: 'custom-notification',
+            payload: { message: text.trim() }
+        });
+        showGlobalNotification(text.trim());
+    }
+};
+
+window.showGlobalNotification = function (msg) {
+    const existing = document.getElementById('global-notification-banner');
+    if (existing) existing.remove();
+
+    const div = document.createElement('div');
+    div.id = 'global-notification-banner';
+    // Using Tailwind CSS classes
+    div.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[10000] bg-orange-500/90 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-float flex items-center gap-3 border border-orange-400/50 max-w-[90vw] md:max-w-md w-max transition-all duration-300';
+    // Initial state for animation
+    div.style.transform = 'translate(-50%, -20px)';
+    div.style.opacity = '0';
+
+    div.innerHTML = `
+        <div class="h-8 w-8 rounded-full bg-white/20 flex flex-shrink-0 items-center justify-center">
+            <span class="material-symbols-outlined text-[18px]">campaign</span>
+        </div>
+        <span class="font-medium text-sm">${escHtml(msg)}</span>
+        <button class="material-symbols-outlined text-white/70 hover:text-white transition-colors p-1" onclick="this.parentElement.remove()">close</button>
+    `;
+
+    document.body.appendChild(div);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        div.style.transform = 'translate(-50%, 0)';
+        div.style.opacity = '1';
+    });
+
+    // Remove after 8 seconds
+    setTimeout(() => {
+        if (div.parentNode) {
+            div.style.transform = 'translate(-50%, -20px)';
+            div.style.opacity = '0';
+            setTimeout(() => { if (div.parentNode) div.remove(); }, 300);
+        }
+    }, 8000);
+};
+
 // ===== DARK MODE TOGGLE =====
 document.addEventListener('DOMContentLoaded', () => {
     const themeToggleBtn = document.getElementById('ctxThemeToggle');

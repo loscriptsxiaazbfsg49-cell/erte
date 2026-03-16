@@ -59,6 +59,15 @@
             document.documentElement.classList.add('dark');
         }
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('Sevice Worker registered', reg);
+                }).catch(err => console.error('SW registration failed', err));
+            });
+        }
+    </script>
 </head>
 
 <body class="bg-background-light text-text-main antialiased h-screen w-full overflow-hidden simplified-mode">
@@ -195,8 +204,13 @@
                 </div>
             </div>
 
-            <!-- User profile -->
+            <!-- User profile and Admin Actions -->
             <div class="p-3 border-t border-border-subtle bg-background-subtle flex flex-col gap-3">
+                <button onclick="promptGlobalNotification()"
+                    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-orange-500/10 text-orange-600 border border-orange-500/20 hover:bg-orange-500/20 transition-all group font-medium text-sm">
+                    <span class="material-symbols-outlined text-[20px]">campaign</span>
+                    <span>Envoyer Notification</span>
+                </button>
                 <button
                     class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm transition-all group">
                     <div class="h-8 w-8 rounded-full bg-cover bg-center border border-border-subtle shrink-0"
