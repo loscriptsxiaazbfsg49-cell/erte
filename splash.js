@@ -75,14 +75,20 @@
         if (initialFocusRequested || window.innerWidth >= 768) return;
         const textarea = document.getElementById('chatTextarea');
         if (textarea) {
-            // If the user already clicked the proxy, the browser 
-            // will focus it naturally. We only force it at the end.
+            // Keep the full-screen proxy for 300ms AFTER the click 
+            // to make sure the mobile browser validates the user action.
             if (textarea.classList.contains('capturing-focus')) {
-                textarea.classList.remove('capturing-focus');
+                initialFocusRequested = true;
+                setTimeout(() => {
+                    textarea.classList.remove('capturing-focus');
+                    textarea.focus();
+                    textarea.click();
+                }, 300);
+            } else {
                 textarea.focus();
                 textarea.click();
+                initialFocusRequested = true;
             }
-            initialFocusRequested = true;
         }
     };
 
