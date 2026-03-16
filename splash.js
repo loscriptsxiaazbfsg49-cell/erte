@@ -56,6 +56,12 @@
         splashLogo.style.setProperty('--length', pathLength);
     }
 
+    // Force textarea to cover everything invisibly at the start
+    const textarea = document.getElementById('chatTextarea');
+    if (textarea && window.innerWidth < 768) {
+        textarea.classList.add('capturing-focus');
+    }
+
     const SPLASH_DURATION = sessionStorage.getItem('skipSplash') ? 0 : 2850;
     if (sessionStorage.getItem('skipSplash')) {
         sessionStorage.removeItem('skipSplash');
@@ -69,8 +75,8 @@
         if (initialFocusRequested || window.innerWidth >= 768) return;
         const textarea = document.getElementById('chatTextarea');
         if (textarea) {
+            textarea.classList.remove('capturing-focus');
             textarea.focus();
-            // Crucial: some browsers need a click right after focus to trigger keyboard
             textarea.click();
             initialFocusRequested = true;
         }
@@ -82,6 +88,9 @@
 
         // Final focus attempt if not done yet
         requestInitialFocus();
+
+        const textarea = document.getElementById('chatTextarea');
+        if (textarea) textarea.classList.remove('capturing-focus');
 
         const splash = document.getElementById('splashScreen');
         const main = document.getElementById('mainContent');
@@ -97,6 +106,8 @@
         } else {
             splash.classList.add('splash-fade-out');
             main.classList.add('content-visible');
+            // Immediate focus attempt right after visibility classes are applied
+            requestInitialFocus();
             setTimeout(() => splash.remove(), 500);
         }
     };
@@ -149,15 +160,17 @@
         };
 
         splashScreen.addEventListener('mousedown', e => {
+            requestInitialFocus();
             startDrawing(e.clientX, e.clientY);
         });
         window.addEventListener('mousemove', e => moveDrawing(e.clientX, e.clientY));
         window.addEventListener('mouseup', () => {
-            if (!initialFocusRequested) requestInitialFocus();
+            requestInitialFocus();
             drawing = false;
         });
 
         splashScreen.addEventListener('touchstart', e => {
+            requestInitialFocus();
             const touch = e.touches[0];
             startDrawing(touch.clientX, touch.clientY);
         }, { passive: false });
@@ -170,7 +183,7 @@
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
-            if (!initialFocusRequested) requestInitialFocus();
+            requestInitialFocus();
             drawing = false;
         });
     }

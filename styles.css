@@ -319,6 +319,16 @@ body {
     box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.12);
 }
 
+/* Temporary class to capture focus during splash screen */
+#chatTextarea.capturing-focus {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 10000 !important;
+    opacity: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
 /* ===== Splash Screen ===== */
 #splashScreen {
     position: fixed;
