@@ -70,6 +70,8 @@
         const textarea = document.getElementById('chatTextarea');
         if (textarea) {
             textarea.focus();
+            // Crucial: some browsers need a click right after focus to trigger keyboard
+            textarea.click();
             initialFocusRequested = true;
         }
     };
@@ -146,11 +148,15 @@
             }
         };
 
-        splashScreen.addEventListener('mousedown', e => startDrawing(e.clientX, e.clientY));
+        splashScreen.addEventListener('mousedown', e => {
+            requestInitialFocus();
+            startDrawing(e.clientX, e.clientY);
+        });
         window.addEventListener('mousemove', e => moveDrawing(e.clientX, e.clientY));
         window.addEventListener('mouseup', () => drawing = false);
 
         splashScreen.addEventListener('touchstart', e => {
+            requestInitialFocus();
             const touch = e.touches[0];
             startDrawing(touch.clientX, touch.clientY);
         }, { passive: false });
