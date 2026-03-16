@@ -141,7 +141,8 @@ body {
     }
 
     #titleArea h1 {
-        font-size: 1.25rem !important;
+        font-size: 1.4rem !important;
+        /* Slightly increased */
         line-height: 1.4 !important;
         text-align: center !important;
         max-width: 280px !important;
@@ -272,15 +273,19 @@ body {
         display: none !important;
     }
 
-    /* Adjust layout toggle button */
+    /* Position badge ABOVE the input bar on mobile */
+    .simplified-mode:not(.conversation-started) #selectedModelBadge {
+        top: -50px !important;
+        bottom: auto !important;
+        right: 16px !important;
+        left: auto !important;
+        transform: none !important;
+    }
+
+    /* Hide layout toggle buttons on mobile */
     #pyramidLayoutToggleBtn,
     #sidebarLayoutToggleBtn {
-        right: 16px !important;
-        bottom: 90px !important;
-        width: 44px !important;
-        height: 44px !important;
-        background: rgb(var(--color-background-light) / 0.9) !important;
-        backdrop-filter: blur(4px) !important;
+        display: none !important;
     }
 }
 

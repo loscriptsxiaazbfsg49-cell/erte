@@ -1426,6 +1426,24 @@ function initAIProviders() {
             frag.appendChild(div);
         });
         modelListEl.innerHTML = ''; modelListEl.appendChild(frag);
+
+        // Add Search Button for Mobile next to the provider name in the header
+        if (window.innerWidth < 768) {
+            let mobileSearchBtn = modelBar.querySelector('#mobileModelSearchBtn');
+            if (!mobileSearchBtn) {
+                mobileSearchBtn = document.createElement('button');
+                mobileSearchBtn.id = 'mobileModelSearchBtn';
+                mobileSearchBtn.className = 'p-1.5 text-text-muted hover:text-primary transition-colors flex items-center justify-center';
+                mobileSearchBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">search</span>';
+                mobileSearchBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    modelBar.classList.add('hidden');
+                    openModelSearchModal();
+                };
+                // Insert before the close button
+                closeBtn.parentNode.insertBefore(mobileSearchBtn, closeBtn);
+            }
+        }
     }
 
     closeBtn.addEventListener('click', () => {
@@ -1815,9 +1833,9 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 function initMobileOptimizations() {
     if (window.innerWidth < 768) {
-        // Remove placeholder
+        // Truncated placeholder for mobile
         const ta = $('chatTextarea');
-        if (ta) ta.placeholder = '';
+        if (ta) ta.placeholder = 'Envoyer...';
 
         // Handle Install Modal
         const modal = $('installModal');
