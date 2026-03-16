@@ -193,49 +193,70 @@ body {
     #draftDialog.modal-fullscreen-mobile {
         background: #000 !important;
         color: #fff !important;
+        overflow: hidden !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #draftHeader {
         border-bottom: none !important;
-        padding: 16px 20px !important;
-        padding-top: env(safe-area-inset-top, 20px) !important;
+        padding: 20px 20px 8px 20px !important;
         justify-content: flex-end !important;
-        /* Pushes close button to the right */
         background: #000 !important;
+        flex-shrink: 0 !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #draftHeader h3 {
         display: none !important;
     }
 
+    /* Close button: top-right, white icon, no background */
     #draftDialog.modal-fullscreen-mobile #closeDraftBtn {
         color: #fff !important;
         background: transparent !important;
-        margin-right: -8px !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 40px !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
     }
 
-    #draftDialog.modal-fullscreen-mobile #closeDraftBtn:hover {
+    #draftDialog.modal-fullscreen-mobile #closeDraftBtn:hover,
+    #draftDialog.modal-fullscreen-mobile #closeDraftBtn:focus {
         background: transparent !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #closeDraftBtn span {
-        font-size: 28px !important;
+        font-size: 26px !important;
+        line-height: 1 !important;
     }
 
     /* Remove gray box and padding around textarea on mobile */
-    #draftDialog.modal-fullscreen-mobile .flex-1.p-6 {
-        padding: 0 24px !important;
+    #draftDialog.modal-fullscreen-mobile .flex-1 {
+        padding: 0 20px !important;
         background: #000 !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #draftTextarea {
         background: #000 !important;
         color: #fff !important;
         border: none !important;
-        font-size: 1.25rem !important;
-        padding: 0 !important;
-        margin-top: 10px !important;
+        border-radius: 0 !important;
         box-shadow: none !important;
+        outline: none !important;
+        width: 100% !important;
+        flex: 1 !important;
+        resize: none !important;
+        /* Fix cursor growing: lock line-height and font-size, disable browser text-size-adjust */
+        font-size: 17px !important;
+        line-height: 1.6 !important;
+        -webkit-text-size-adjust: none !important;
+        text-size-adjust: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #draftTextarea::placeholder {
@@ -250,8 +271,9 @@ body {
     #draftDialog.modal-fullscreen-mobile #draftFooter {
         background: transparent !important;
         border-top: none !important;
-        padding: 24px !important;
-        padding-bottom: env(safe-area-inset-bottom, 32px) !important;
+        padding: 16px 20px !important;
+        /* Not too low */
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
         justify-content: flex-end !important;
     }
 
@@ -261,28 +283,22 @@ body {
         min-width: 56px !important;
         border-radius: 50% !important;
         padding: 0 !important;
-        display: flex !important;
+        display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         background: #fff !important;
-        color: #000 !important;
-        box-shadow: none !important;
-        font-size: 0 !important;
-        /* Hides "Envoyer" text */
-    }
-
-    #draftDialog.modal-fullscreen-mobile #draftSendBtn .material-symbols-outlined {
-        font-size: 28px !important;
-        margin: 0 !important;
-    }
-
-    /* Hide any text nodes inside the send button */
-    #draftDialog.modal-fullscreen-mobile #draftSendBtn {
         color: transparent !important;
+        /* hide text */
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
+        overflow: hidden !important;
     }
 
     #draftDialog.modal-fullscreen-mobile #draftSendBtn .material-symbols-outlined {
+        font-size: 26px !important;
+        margin: 0 !important;
+        line-height: 1 !important;
         color: #000 !important;
+        display: block !important;
     }
 
     /* Input positioning on mobile: Visible at the bottom with enough margin */
@@ -424,6 +440,66 @@ body {
     #pyramidLayoutToggleBtn,
     #sidebarLayoutToggleBtn {
         display: none !important;
+    }
+
+    /* ======= SEARCH MODAL FULLSCREEN ON MOBILE ======= */
+    #searchModal {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+    }
+
+    #searchModal>div {
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        height: 100dvh !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #searchModal>div>div:last-child {
+        flex: 1 !important;
+        overflow-y: auto !important;
+    }
+
+    /* ======= MODEL SEARCH MODAL FULLSCREEN ON MOBILE ======= */
+    #modelSearchModal {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+    }
+
+    #modelSearchModal>div {
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        height: 100dvh !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #modelSearchModal #modelSearchResults {
+        max-height: none !important;
+        flex: 1 !important;
+    }
+
+    /* ======= SEARCH MODAL: Fix scrollable results (no black block) ======= */
+    #searchResults {
+        max-height: none !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+    }
+
+    /* ======= DROPDOWN FIX: ensure menus are above everything on mobile ======= */
+    #qualityMenu,
+    #privacyMenu {
+        z-index: 500 !important;
+    }
+
+    /* ======= CONVERSATION 3-DOTS: Always visible on mobile (no hover needed) ======= */
+    .conv-menu-btn {
+        opacity: 1 !important;
     }
 }
 

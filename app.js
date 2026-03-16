@@ -1638,6 +1638,14 @@ function openSearchModal() {
     input.value = '';
     handleGlobalSearch(); // Show all initially
     setTimeout(() => input.focus(), 50);
+
+    // Wire up mobile close button (once)
+    const closeBtn = $('closeSearchBtn');
+    if (closeBtn && !closeBtn._wired) {
+        closeBtn._wired = true;
+        closeBtn.addEventListener('click', closeSearchModal);
+        closeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeSearchModal(); }, { passive: false });
+    }
 }
 
 function closeSearchModal() {
@@ -2067,6 +2075,12 @@ function setupDropdown(dropdownId, btnId, menuId) {
     dropdown.addEventListener('mouseenter', show);
     dropdown.addEventListener('mouseleave', hide);
     btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.contains('hidden') ? show() : (clearTimeout(hideTimeout), menu.classList.add('hidden'), menu.classList.remove('dropdown-menu-open')); });
+    // Fix for mobile: touchstart fires before 300ms click delay, shows menu on first tap
+    btn.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        menu.classList.contains('hidden') ? show() : (clearTimeout(hideTimeout), menu.classList.add('hidden'), menu.classList.remove('dropdown-menu-open'));
+    }, { passive: false });
     menu.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
     menu.addEventListener('mouseleave', hide);
     return { show, hide };

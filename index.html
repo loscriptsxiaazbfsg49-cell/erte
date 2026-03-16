@@ -64,7 +64,7 @@
 <body class="bg-background-light text-text-main antialiased h-screen w-full overflow-hidden simplified-mode">
     <!-- Version de test pour mobile -->
     <div id="versionIndicator"
-        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#5</div>
+        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#8</div>
     <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splash-stage">
@@ -236,8 +236,7 @@
                 <!-- Center: Title & Actions -->
                 <div id="mobileTitleWrapper"
                     class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 min-w-0 max-w-[85%]">
-                    <span id="mobileConvTitle" class="font-semibold text-text-main truncate cursor-pointer text-center"
-                        onclick="sessionStorage.setItem('skipSplash', 'true'); window.location.reload();">Omegai</span>
+                    <span id="mobileConvTitle" class="font-semibold text-text-main truncate text-center">Omegai</span>
                     <input id="mobileTitleInput" type="text"
                         class="hidden bg-transparent border-none font-semibold text-text-main focus:ring-0 p-0 w-full text-center" />
 
@@ -690,9 +689,15 @@
                 <input id="globalSearchInput" type="text"
                     class="flex-1 bg-transparent border-none text-base text-text-main placeholder:text-text-muted focus:ring-0"
                     placeholder="Rechercher des conversations..." />
-                <div
-                    class="flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-border-subtle bg-background-subtle text-[10px] text-text-muted font-medium">
+                <!-- ESC badge: desktop only -->
+                <div id="searchEscBadge"
+                    class="md:flex hidden items-center gap-1.5 px-1.5 py-0.5 rounded border border-border-subtle bg-background-subtle text-[10px] text-text-muted font-medium">
                     ESC</div>
+                <!-- Close button: mobile only -->
+                <button id="closeSearchBtn"
+                    class="md:hidden flex items-center justify-center h-8 w-8 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
             </div>
             <div id="searchResults" class="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
                 <!-- Les résultats apparaîtront ici -->
