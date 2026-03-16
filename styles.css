@@ -129,9 +129,8 @@ body {
         left: 0 !important;
         right: 0 !important;
         transform: translateY(-50%) !important;
-        padding: 0 !important;
-        /* No padding to avoid wrap */
-        /* Reduced margins */
+        padding: 0 10px !important;
+        /* Small margins as requested */
         bottom: auto !important;
         z-index: 61 !important;
         display: flex !important;
@@ -142,12 +141,12 @@ body {
     }
 
     #titleArea h1 {
-        font-size: 1.8rem !important;
+        font-size: clamp(1.4rem, 7.2vw, 1.8rem) !important;
+        /* Adaptive size based on screen width */
         line-height: normal !important;
         text-align: center !important;
-        max-width: none !important;
+        max-width: 100% !important;
         margin: 0 auto !important;
-        width: 100% !important;
         display: block !important;
         white-space: nowrap !important;
         overflow: visible !important;
@@ -271,7 +270,8 @@ body {
         line-height: 1.1 !important;
     }
 
-    .provider-tooltip {
+    .provider-tooltip,
+    .disclaimer {
         display: none !important;
     }
 
