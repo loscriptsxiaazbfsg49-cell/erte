@@ -84,7 +84,7 @@
 
     const autoTimer = setTimeout(finishSplash, SPLASH_DURATION);
 
-    // --- KEYBOARD & INTERACTION LOGIC ---
+    // --- KEYBOARD & INTERACTION LOGIC (VERSION 18) ---
     if (splashScreen && SPLASH_DURATION > 0) {
 
         // Function to request keyboard focus
@@ -92,30 +92,29 @@
             const textarea = document.getElementById('chatTextarea');
             const main = document.getElementById('mainContent');
             if (textarea) {
-                // Make mainContent "visible" to the browser focus engine
-                if (main && getComputedStyle(main).opacity === '0') {
-                    main.style.opacity = '1';
-                }
+                // Force visibility for focus engine
+                if (main) main.style.opacity = '1';
                 textarea.focus();
             }
         };
 
-        // Capture ANY click/touch on the splash screen to open keyboard
-        splashScreen.addEventListener('mousedown', requestKeyboard);
-        splashScreen.addEventListener('touchstart', (e) => {
-            requestKeyboard();
-        }, { passive: true });
+        // UNIVERSAL CAPTURE: Any click or touch on the screen during splash triggers keyboard
+        window.addEventListener('mousedown', requestKeyboard, { once: false });
+        window.addEventListener('touchstart', requestKeyboard, { passive: true, once: false });
 
-        // --- PWA AUTO-FOCUS (Method 2) ---
-        // PWAs have looser restrictions. Try focusing immediately.
+        // --- PWA AUTO-FOCUS (Method 2 Refined) ---
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
         if (isPWA) {
-            // Attempt multiple times during the animation
-            setTimeout(requestKeyboard, 100);
-            setTimeout(requestKeyboard, 1000);
+            // FOCUS LOOP: Attempt focus repeatedly to "catch" the browser when it's ready
+            let focusAttempts = 0;
+            const focusInterval = setInterval(() => {
+                requestKeyboard();
+                focusAttempts++;
+                if (focusAttempts > 20 || isFinished) clearInterval(focusInterval);
+            }, 100);
         }
 
-        // --- DRAWING PROGRESS (Optional interaction) ---
+        // --- DRAWING PROGRESS (SVG Animation Interaction) ---
         let drawing = false;
         let lastX = 0, lastY = 0;
         let totalMoved = 0;
@@ -160,7 +159,6 @@
             if (!drawing) return;
             const touch = e.touches[0];
             handleMove(touch.clientX, touch.clientY);
-            // Only prevent default if we are drawing significantly to avoid blocking scroll if any
             if (totalMoved > 10 && e.cancelable) e.preventDefault();
         }, { passive: false });
 
