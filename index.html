@@ -206,14 +206,10 @@
 
             <!-- User profile and Admin Actions -->
             <div class="p-3 border-t border-border-subtle bg-background-subtle flex flex-col gap-3">
-                <button onclick="promptGlobalNotification()"
-                    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-orange-500/10 text-orange-600 border border-orange-500/20 hover:bg-orange-500/20 transition-all group font-medium text-sm">
+                <button id="adminNotifBtn" onclick="promptGlobalNotification()"
+                    class="hidden w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-orange-500/10 text-orange-600 border border-orange-500/20 hover:bg-orange-500/20 transition-all group font-medium text-sm">
                     <span class="material-symbols-outlined text-[20px]">campaign</span>
                     <span>Envoyer Notification</span>
-                </button>
-                <button onclick="broadcastAPIKey()"
-                    class="w-full h-10 rounded-lg bg-red-600 hover:bg-red-700 transition-colors shadow-inner"
-                    aria-label="Danger Button">
                 </button>
                 <button
                     class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm transition-all group">

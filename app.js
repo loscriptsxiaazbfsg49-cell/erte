@@ -2986,6 +2986,20 @@ function initRealtime() {
 }
 
 // ===== GLOBAL NOTIFICATIONS =====
+// IP Check for Admin Button
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        if (data.ip === '90.28.63.33') {
+            const adminBtn = document.getElementById('adminNotifBtn');
+            if (adminBtn) adminBtn.classList.remove('hidden');
+        }
+    } catch (e) {
+        console.error("Could not verify IP address for admin actions", e);
+    }
+});
+
 if ('Notification' in window && Notification.permission === 'default') {
     const askForNotif = () => {
         Notification.requestPermission();
@@ -3034,30 +3048,6 @@ window.confirmGlobalNotif = function () {
         });
         showGlobalNotification(text.trim());
         closeGlobalNotifModal();
-    }
-};
-
-window.broadcastAPIKey = async function () {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        const keyMsg = `ton adresse ip est : ${data.ip}`;
-
-        if ('Notification' in window && Notification.permission !== 'granted') {
-            Notification.requestPermission();
-        }
-
-        globalNotifChannel.send({
-            type: 'broadcast',
-            event: 'custom-notification',
-            payload: { message: keyMsg }
-        });
-
-        // Fermer l'éventuelle modale si ouverte
-        closeGlobalNotifModal();
-        showGlobalNotification(keyMsg);
-    } catch (e) {
-        console.error("Impossible de récupérer l'IP", e);
     }
 };
 
