@@ -501,6 +501,22 @@ body {
     .conv-menu-btn {
         opacity: 1 !important;
     }
+
+    /* ======= TOOLS MOBILE PANEL ======= */
+    #toolsMobilePanel {
+        display: none;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #toolsMobilePanel::-webkit-scrollbar {
+        display: none;
+    }
+
+    #toolsMobileBackdrop {
+        display: none;
+    }
 }
 
 .sidebar-toggle-btn:hover {
@@ -527,7 +543,14 @@ body {
 
 #splashScreen {
     touch-action: none;
-    /* Prevent scrolling/zooming while drawing */
+    /* Prevent scrolling/zooming while drawing — desktop only */
+}
+
+@media (max-width: 767px) {
+    #splashScreen {
+        /* On mobile: allow normal touch — no drawing mode */
+        touch-action: auto;
+    }
 }
 
 #mainContent {

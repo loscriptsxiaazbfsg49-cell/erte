@@ -1,6 +1,6 @@
-# 📘 Omegai — Documentation Technique
+# 🤖 Omegai — Documentation Technique
 
-> **Omegai** est une interface de chat IA unifiée qui agrège les modèles de multiples fournisseurs d'IA via l'API OpenRouter. L'application permet de sélectionner dynamiquement un fournisseur et un modèle, puis d'interagir via une interface de chat élégante.
+> **Omegai** est une interface de chat IA unifiée qui agrège l'intégralité des modèles disponibles sur OpenRouter (LLM, vision, image, audio, vidéo…). Elle propose une sélection dynamique de fournisseur et de modèle, un classement intelligent en temps réel basé sur le prompt, la gestion de fichiers joints, et une interface chat élégante adaptée mobile et desktop.
 
 ---
 
@@ -9,11 +9,11 @@
 ```
 omegai/
 ├── index.html               # Page principale (HTML + config Tailwind)
-├── styles.css               # Tous les styles CSS
-├── app.js                   # Logique JavaScript principale
+├── styles.css               # Tous les styles CSS personnalisés
+├── app.js                   # Logique JavaScript principale (~3600 lignes)
 ├── splash.js                # Animation splash screen + favicon arrondi
-├── logo.png                 # Logo Omegai (utilisé en favicon + splash)
-└── README.md                # Ce fichier de documentation
+├── logo.png                 # Logo Omegai (favicon + splash)
+└── README.md                # Ce fichier
 ```
 
 ---
@@ -21,172 +21,192 @@ omegai/
 ## 📄 Description des Fichiers
 
 ### `index.html`
-Page HTML principale de l'application. Contient :
-- **Configuration Tailwind CSS** : thème personnalisé (couleurs, polices, ombres, arrondis)
-- **Splash Screen** : animation SVG du logo au chargement
-- **Sidebar gauche** : navigation (recherche, nouveau chat, espace de travail, historique, profil)
-- **Zone centrale** : titre, zone de saisie dynamique (agrandissement auto) avec boutons (vocal, édition, envoi)
-- **Sélection des IA (2 Dispositions)** :
-  - *Disposition Pyramide* (par défaut) : centrée au-dessus de la barre de recherche avec pagination horizontale
-  - *Disposition Colonne* (Sidebar Droite) : logos des fournisseurs empilés verticalement à droite
-- **Panneau de sélection de modèle** : pop-up dynamique des modèles du fournisseur sélectionné
-- **Menus contextuels** : clic droit personnalisé sur le textarea et divers éléments (copier, sélectionner, éditer)
-- **Dropdowns** : Qualité (maximale/éco/eco ultra) et Confidentialité (privé/public)
-- **Plugin highlight.js** : `highlightjs-line-numbers.js` pour la numérotation correcte des lignes dans les blocs de code
+Page HTML principale. Contient :
+- **Configuration Tailwind CSS** : thème personnalisé (couleurs, polices, ombres, arrondis, dark mode)
+- **Splash Screen** : animation SVG du logo Ωi au chargement
+- **Sidebar gauche** : navigation (recherche, nouveau chat, espace de travail, historique épinglé, profil)
+- **Zone centrale** : titre animé, suggestions, zone de chat, barre de saisie
+- **Barre de saisie (`#inputBar`)** :
+  - Structure en `flex-col` : zone thumbnails fichiers (`#inputFilesPreview`) en haut, contrôles (trombone + textarea + boutons) dans `#inputControlsRow` en bas
+  - Bouton trombone `#attachBtn`, textarea `#chatTextarea`, boutons Éditer / Voix / Envoyer
+- **Sélection des IA — 2 Dispositions** :
+  - *Disposition Pyramide* (par défaut) : logos centrés au-dessus de la barre de saisie avec pagination horizontale
+  - *Disposition Sidebar droite* : `#aiProviderSidebar` (72px, `right:0`), colonne de logos scrollable
+- **Panneau de modèles** : `#modelSelectorBar` (pop-up dynamique des modèles du provider sélectionné, avec recherche)
+- **Badge de classement IA** (`#modelRankingIndicator`) : badge flottant indiquant le type de tâche détecté
+- **Menus contextuels** : clic droit sur textarea, bulles IA, sidebar, conversations
+- **Panneau trombone mobile** : panel flottant bas-gauche (`#toolsMobilePanel`) avec Camera / Photos / Fichiers
 
 ### `styles.css`
-Feuille de styles contenant tous les styles personnalisés, organisés en sections :
+Feuille de styles organisée en sections :
 
 | Section | Description |
 |---------|-------------|
-| **Base** | Police Inter par défaut |
-| **Scrollbar** | Scrollbar personnalisée fine (5px) |
-| **Left Sidebar** | Collapse/expand avec animation + bouton toggle |
-| **Splash Screen** | Animations SVG (dessin, remplissage, rétrécissement, heartbeat) |
-| **Animations** | `fadeInUp`, `spin`, `slideInRight` |
-| **Textarea** | Masquage du scrollbar natif |
-| **Focus Mode** | Masquage des suggestions quand le textarea est actif |
-| **AI Provider Sidebar** | Boutons logos, état hover/selected |
-| **Provider Tooltip** | Tooltip CSS (disposition 1 uniquement) + tooltip JS portal (`#providerHoverTooltip`) |
+| **Base** | Police Inter, dark theme global |
+| **Scrollbar** | Scrollbar fine 5px, transparente sur mobile |
+| **Left Sidebar** | Collapse/expand animé + bouton toggle |
+| **Splash Screen** | Animations SVG : dessin, remplissage, rétrécissement, heartbeat |
+| **Animations** | `fadeInUp`, `spin`, `slideInRight`, `slideInUp` |
+| **Textarea** | Masquage scrollbar natif, auto-resize |
+| **Focus Mode** | Masquage suggestions quand textarea actif |
+| **AI Provider Sidebar** | Boutons logos, état hover/selected, scrollbar cachée |
+| **Provider Tooltip** | Tooltip portal `position:fixed` (sidebar uniquement) |
 | **Model Selector** | Items de modèle avec hover et état sélectionné |
-| **Code Blocks** | Numérotation des lignes via plugin hljs-ln, scrollbar horizontal stylisée |
+| **Code Blocks** | Numérotation hljs-ln, scrollbar horizontale stylisée |
+| **Mobile Panel** | Panneau trombone mobile : hauteur max, scroll interne |
+| **Input Files Preview** | Thumbnails dans la barre de saisie (72×72px, border-radius:14px) |
 
 ### `app.js`
-Logique JavaScript principale, organisée en modules initialisés au `DOMContentLoaded` :
+Logique JavaScript principale (~3600 lignes), organisée en modules :
 
-#### Fonctions principales
+#### Modules principaux
 
-| Fonction | Description |
-|----------|-------------|
-| `toggleSidebar()` | Réduit/déploie la sidebar gauche (globale, appelée par `onclick`) |
+| Module/Fonction | Description |
+|----------------|-------------|
+| `toggleSidebar()` | Réduit/déploie la sidebar gauche |
 | `initSidebar()` | Position initiale du bouton toggle |
-| `initDropdowns()` | Initialise les dropdowns Qualité et Confidentialité (hover + click + sélection active) |
-| `setupDropdown(id, btnId, menuId)` | Configure un dropdown avec comportement hover/click/auto-fermeture |
-| `setupSelectableDropdown(...)` | Étend `setupDropdown` avec sélection d'item, check visuel et callback |
-| `initFocusMode()` | Gère le mode focus : masque les suggestions quand on tape, restaure quand on efface |
-| `initContextMenu()` | Menu contextuel personnalisé pour le textarea |
-| `initAIProviders()` | Module complet de gestion des fournisseurs/modèles IA (Pyramide & Sidebar) |
-| `updateLayoutToggleButtons()` | Gestion centralisée de la visibilité des boutons de changement de disposition |
-| `adjustPyramidShift()` | Repositionne dynamiquement les éléments centraux selon la hauteur de la barre de recherche |
-| `initChat()` | Logique d'envoi de messages, bulles de chat, indicateur de frappe, éditeur brouillon |
-| `copyCodeBlock(btn)` | Copie le contenu d'un bloc de code dans le presse-papier avec feedback visuel |
-| `showProviderTooltip(btn, name)` | Affiche le tooltip du provider via un élément `fixed` sur le `<body>` (portal pattern) |
-| `hideProviderTooltip()` | Masque le tooltip provider avec animation de fondu |
-
-#### Module `initAIProviders()` — Détail
-
-Ce module gère toute l'interaction avec les fournisseurs d'IA :
-
-| Sous-fonction | Description |
-|---------------|-------------|
-| `getSlug(id)` | Extrait le slug du fournisseur depuis l'ID du modèle (`openai/gpt-4o` → `openai`) |
-| `getLogo(slug)` | Retourne l'URL du favicon via Google Favicon API (DOMAINS map) ou initiales en fallback |
-| `getInitials(name)` | Génère les initiales pour le fallback (ex: `"OpenAI"` → `"OA"`) |
-| `slugColor(slug)` | Génère une couleur HSL unique basée sur un hash du slug |
-| `getName(slug)` | Retourne le nom d'affichage du fournisseur (extrait dynamiquement de l'API) |
-| `fetchModels()` | Récupère les modèles depuis OpenRouter avec cache sessionStorage (TTL: 30 min) |
-| `processModels()` | Extrait les noms, groupe par fournisseur, **trie : favicon connus en tête, initiales en bas** |
-| `renderProviders()` | Affiche les boutons logos dans la disposition active (Pyramid ou Sidebar) |
-| `selectProvider(slug)` | Sélectionne un fournisseur et affiche ses modèles |
-| `positionModelBar()` | Positionne le panneau de modèles en alignement avec la barre de saisie |
-| `renderModels(models)` | Affiche la liste des modèles avec nom, ID, contexte et prix |
-| `showBadge(name, slug)` | Affiche/met à jour le badge du modèle sélectionné au-dessus de la barre |
-| `sendChatMessage(msg)` | Envoie un message via Supabase Edge Function (clé sécurisée serveur) |
-| `createConversation(title)` | Crée une conversation dans Supabase DB |
-
-#### Module `initChat()` — Détail
-
-| Sous-fonction | Description |
-|---------------|-------------|
-| `switchToChatMode()` | Bascule de l'écran d'accueil au mode conversation |
-| `addMessageBubble(role, content)` | Ajoute une bulle de message (user/assistant) |
-| `renderMarkdown(text)` | Rendu markdown avec blocs de code colorisés et numérotés (via hljs + plugin) |
-| `showTypingIndicator()` | Affiche l'indicateur de frappe animé |
-| `handleSend()` | Gère l'envoi complet (validation, UI, appel API, réponse) |
-| `autoNameConversation()` | Génère automatiquement un titre pour la conversation via IA |
-
-#### Variables d'état
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `allModels` | `Array` | Tous les modèles retournés par l'API |
-| `providerMap` | `Object` | Modèles groupés par fournisseur (`{ slug: { name, logoUrl, models[] } }`) |
-| `providerDisplayNames` | `Object` | Noms d'affichage extraits des données API |
-| `selectedProvider` | `string\|null` | Slug du fournisseur actuellement sélectionné |
-| `selectedProviderSlug` | `string\|null` | Slug sauvegardé lors de la sélection d'un modèle |
-| `selectedModel` | `string\|null` | ID du modèle actuellement sélectionné |
-| `currentConversationId` | `string\|null` | UUID de la conversation en cours |
-| `chatMessages` | `Array` | Historique des messages pour le contexte API |
-| `conversationStarted` | `boolean` | Indique si la conversation est en cours |
-| `titleAutoSet` | `boolean` | Empêche le renommage automatique multiple |
-| `isSending` | `boolean` | Verrou anti-double envoi |
-| `providerLayout` | `string` | Disposition active (`'sidebar'` ou `'pyramid'`) |
-
-### `splash.js`
-Script chargé en premier, contient deux parties :
-
-1. **Favicon arrondi** : charge `logo.png`, dessine sur un canvas avec clip arrondis, et remplace le favicon du navigateur
-2. **Animation splash** : calcule le dessin SVG, fondu d'apparition. Peut être ignorée dynamiquement si `sessionStorage.getItem('skipSplash')` est présent.
+| `initDropdowns()` | Dropdowns Qualité et Confidentialité |
+| `setupDropdown()` | Dropdown hover/click/auto-fermeture |
+| `setupSelectableDropdown()` | Dropdown avec sélection, check visuel, callback |
+| `initFocusMode()` | Mode focus : masque suggestions quand on tape |
+| `initContextMenu()` | Menu contextuel textarea |
+| `initAIContextMenu()` | Menu contextuel bulles assistant (Copier, Résumer, Humaniser) |
+| `initAIProviders()` | Module complet fournisseurs/modèles IA |
+| `initChat()` | Logique envoi messages, bulles, streaming, historique |
+| `initToolsMenu()` | Bouton trombone : panel mobile + desktop file pickers |
+| `scheduleModelRanking()` | Déclencheur debounced du classement IA |
+| `rankProvidersByPrompt()` | Moteur de scoring des providers |
+| `showRankingIndicator()` | Badge flottant indiquant le classement actif |
+| `copyCodeBlock()` | Copie code sans numéros de ligne, feedback visuel |
+| `showProviderTooltip()` | Tooltip provider (portal `position:fixed`) |
+| `addMessageBubble()` | Bulle de message user/assistant avec vignettes fichiers |
+| `renderMarkdown()` | Markdown → HTML avec hljs + numérotation lignes |
+| `openModelSearchModal()` | Modale de recherche globale de modèles filtrés par type |
 
 ---
 
 ## 🔌 APIs et Services Externes
 
 ### OpenRouter API
-- **URL** : `https://openrouter.ai/api/v1/models`
-- **Méthode** : `GET`
-- **Données retournées** : liste de modèles avec `id`, `name`, `context_length`, `pricing`, `architecture`
-- **Cache** : les données sont mises en cache dans `sessionStorage` pendant 30 minutes
+- **URL** : Supabase Edge Function `/chat/models` (proxy sécurisé)
+- **Données** : liste complète des modèles (`id`, `name`, `context_length`, `pricing`, `architecture`, modalités)
+- **Cache** : `sessionStorage` avec clé versionnée (`openrouter_models_v8`), TTL 30 min
+- **Endpoint modèles** : `https://zumhjpzbvnqtcntvwvff.supabase.co/functions/v1/chat/models`
 
 ### Google Favicon API
 - **URL** : `https://www.google.com/s2/favicons?domain={domain}&sz=64`
-- **Usage** : récupère le favicon de chaque fournisseur d'IA en 64x64px
-- **Mapping `DOMAINS`** : dictionnaire slug → domaine réel du produit (ex: `openai` → `chatgpt.com`, `anthropic` → `claude.ai`, `google` → `gemini.google.com`)
-- **Fallback** : si le slug n'est pas dans `DOMAINS`, génère des initiales colorées (HSL unique par slug)
-- **Tri** : les providers avec un favicon connu apparaissent en tête de liste ; ceux en initiales sont relégués en bas
+- **Mapping `DOMAINS`** : slug → domaine réel produit (ex: `anthropic` → `claude.ai`, `google` → `gemini.google.com`)
+- **Fallback** : initiales colorées générées via Canvas (couleur HSL unique par hash du slug)
+- **Tri** : providers avec favicon connu en tête, ceux en initiales relégués en bas
 
-### highlightjs-line-numbers.js
-- **CDN** : `https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js`
-- **Usage** : numérotation correcte des lignes dans les blocs de code, compatible avec les `<span>` hljs multi-lignes
-- **Méthode** : `hljs.lineNumbersValue(html)` — génère un tableau `<table class="hljs-ln">` avec colonnes numéro / code
+### Supabase (Backend)
+- **Projet** : `omegai` (région eu-west-1)
+- **URL** : `https://zumhjpzbvnqtcntvwvff.supabase.co`
+- **Edge Function `chat`** : proxy sécurisé → lit la clé API depuis la DB, forward vers OpenRouter
+- **Edge Function `chat/models`** : agrège l'API standard OpenRouter + sitemap pour les modèles cachés
+- **Tables** :
+  - `api_keys` : clés API (accès RLS strict, jamais exposée côté client)
+  - `conversations` : titre, modèle, épinglage, compteur messages
+  - `messages` : rôle (user/assistant), contenu, `conversation_id`
+- **Realtime** : souscription aux changements de `conversations` pour mise à jour live de la sidebar
+
+### highlightjs + plugin line-numbers
+- **CDN highlight.js** : thème `atom-one-dark`
+- **Plugin** : `highlightjs-line-numbers.js` v2.8 (numérotation correcte multi-lignes)
+- **Méthode** : `hljs.lineNumbersValue(html)` → tableau `<table class="hljs-ln">`
+- **Fallback** : découpage manuel par `\n` si plugin absent
 
 ### Google Fonts
-- **Inter** (300-700) : police principale de l'interface
+- **Inter** (300→700) : police principale
 - **Material Symbols Outlined** : icônes Material Design
 
 ### Tailwind CSS
-- Chargé via CDN avec les plugins `forms` et `container-queries`
-- Configuration personnalisée pour les couleurs, polices, arrondis et ombres
+- CDN avec plugins `forms` et `container-queries`
+- Thème étendu : couleurs, arrondis, ombres, polices
 
-### Supabase (Backend)
-- **Projet** : `omegai` (région: eu-west-1)
-- **URL** : `https://zumhjpzbvnqtcntvwvff.supabase.co`
-- **Edge Function `chat`** : proxy sécurisé qui lit la clé API depuis la DB et forward les requêtes vers OpenRouter
-- **Tables** :
-  - `api_keys` : stocke les clés API (RLS strict, aucun accès public)
-  - `conversations` : stocke les conversations avec titre et modèle
-  - `messages` : stocke les messages (user/assistant) liés aux conversations
-- **Sécurité** : la clé OpenRouter ne transite jamais côté client
+---
+
+## 🧠 Classement Intelligent des Providers
+
+### Fonctionnement
+À chaque frappe dans le textarea (debounce 300ms), `rankProvidersByPrompt()` :
+1. **Détecte des signaux** dans le texte via regex (12 catégories)
+2. **Score chaque provider** selon ses forces déclarées dans `PROVIDER_SIGNALS`
+3. **Rewrites `state.providerMap`** dans le nouvel ordre de pertinence
+4. **Re-render** la barre de providers → les plus adaptés apparaissent en premier
+5. **Affiche le badge** `#modelRankingIndicator` indiquant le type de tâche détecté
+
+### Signaux Détectés
+
+| Signal | Mots-clés types | Providers favorisés |
+|--------|-----------------|---------------------|
+| `vision` | image, photo, describe, screenshot, OCR | Google, OpenAI, Qwen |
+| `code` | code, debug, function, JavaScript, Python... | DeepSeek, Mistral, Microsoft |
+| `math` | calcul, équation, physique, chimie... | DeepSeek, Qwen, OpenAI |
+| `creative` | écris, roman, poème, slogan, histoire... | Anthropic, Meta Llama |
+| `search` | recherche, actualité, news, tendance... | Perplexity, Google, Cohere |
+| `reasoning` | analyse, raisonne, pros/cons, stratégi... | Anthropic, DeepSeek, OpenAI |
+| `chat` | comment, pourquoi, help, conseille... | Meta, X-AI, Anthropic |
+| `audio` | musique, voix, transcribe, podcast... | Minimax, ByteDance |
+| `video` | vidéo, montage, animation, clip... | ByteDance, Tencent |
+| `longCtx` | fichier entier, résume ce livre... | Moonshot, Cohere, Anthropic |
+| `shopping` | achète, prix, Amazon, comparaison... | Perplexity |
+| `fast` | rapide, court, une phrase, résume en... | Meta Llama, Mistral |
+
+> **Bonus vision** : si des images sont jointes (`state.pendingFiles`), les providers ayant des modèles vision (détectés via `architecture.input_modalities`) reçoivent +4 points.
+
+### Badge de Classement
+- **Desktop** : pill vertical, juste à gauche du `#aiProviderSidebar` (right: 76px), centré verticalement, texte en `writing-mode: vertical-rl`
+- **Mobile** : **Masqué** (désactivé sur mobile pour une interface plus épurée)
+- Disparaît automatiquement quand le textarea est vidé (restauration de l'ordre par défaut)
+
+---
+
+## 📎 Gestion des Fichiers Joints
+
+### Workflow
+```
+Trombone → panel (mobile) ou menu desktop
+              ↓
+    Sélection Caméra / Photos / Fichiers
+              ↓
+    handleFileSelection() → state.pendingFiles.push(f)
+              ↓
+    renderInputFilePreviews() → thumbnails dans #inputBar
+              ↓
+    L'utilisateur écrit son prompt + clique Envoyer
+              ↓
+    handleSend() → addMessageBubble(role, content, pendingFiles)
+              ↓
+    Bulle utilisateur avec vignettes + texte
+    state.pendingFiles = [] — nettoyage
+```
+
+### Rendu des Vignettes
+- **Images** : thumbnail 72×72px, `object-fit:cover`, `border-radius:14px`
+- **Vidéos** : même taille + overlay icône `play_circle`
+- **Documents** : pill avec icône + nom + taille en Ko
+- **Bouton ✕** : supprime le fichier individuel de `state.pendingFiles` et rafraîchit l'affichage
 
 ---
 
 ## 🎨 Thème et Design
 
-### Palette de couleurs
+### Palette de Couleurs (Dark Theme)
 
 | Token | Valeur | Usage |
 |-------|--------|-------|
 | `primary` | `#000000` | Éléments d'action principaux |
 | `primary-content` | `#ffffff` | Texte sur fond primary |
-| `background-light` | `#ffffff` | Fond de page |
-| `background-subtle` | `#f9fafb` | Fonds secondaires (sidebar, inputs) |
-| `border-subtle` | `#e5e7eb` | Bordures légères |
-| `text-main` | `#111827` | Texte principal |
-| `text-muted` | `#6b7280` | Texte secondaire / labels |
+| `background-light` | `#0f0f0f` | Fond de page (dark) |
+| `background-subtle` | `#1a1a1a` | Fonds secondaires |
+| `border-subtle` | `#2a2a2a` | Bordures |
+| `text-main` | `#f0f0f0` | Texte principal |
+| `text-muted` | `#888888` | Texte secondaire |
 
 ### Typographie
 - **Police** : Inter (Google Fonts)
-- **Poids** : 300 (light), 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+- **Poids** : 300 / 400 / 500 / 600 / 700
 - **Icônes** : Material Symbols Outlined
 
 ### Animations
@@ -194,56 +214,72 @@ Script chargé en premier, contient deux parties :
 | Animation | Durée | Usage |
 |-----------|-------|-------|
 | `splashDrawPath` | 3s | Dessin du logo SVG |
-| `splashFillIn` | 0.5s | Remplissage noir du logo |
+| `splashFillIn` | 0.5s | Remplissage du logo |
 | `splashShrinkToBall` | 0.4s | Rétrécissement en boule |
-| `splashBallAppear` | 0.4s | Apparition de la boule noire |
+| `splashBallAppear` | 0.4s | Apparition boule noire |
 | `splashHeartbeat` | 1.2s | Battement de la boule |
-| `fadeInUp` | 0.5s | Apparition du contenu central |
-| `slideInRight` | 0.3s | Apparition de la sidebar IA |
+| `fadeInUp` | 0.5s | Apparition contenu central |
+| `slideInRight` | 0.3s | Apparition sidebar IA |
+| `slideInUp` | 0.3s | Panel mobile trombone |
 
 ---
 
 ## ⚙️ Fonctionnalités
 
 ### 1. Splash Screen
-- Animation SVG du logo Omegai au chargement
-- Transition fluide (fade-out/fade-in)
-- **Ignorer (Skip)** : clic sur le logo actualise la page en esquivant l'animation (`sessionStorage`)
+- Dessin SVG → remplissage → rétrécissement → heartbeat
+- Ignoré si `sessionStorage.getItem('skipSplash')` est présent
+- Clic sur le logo : recharge la page sans l'animation
 
-### 2. Sidebar gauche (Navigation)
-- Recherche de chats (Modal global)
+### 2. Sidebar Gauche (Navigation)
+- Recherche globale des conversations (modale `#searchModal`)
 - Nouveau chat
-- Espace de travail & Historique synchronisés en temps réel via Supabase Realtime
-- Collapse/expand avec animation
+- Historique en temps réel (Supabase Realtime)
+- Épinglage de conversations
+- Menu contextuel par conversation (renommer, supprimer, épingler)
+- Collapse/expand animé
 
-### 3. Sélection de modèle IA (Double Disposition)
-- **Disposition Pyramide** (Disposition 2) : logos centrés, flexbox avec pagination. Aucun tooltip n'apparaît au survol.
-- **Disposition Sidebar droite** (Disposition 1) : colonne étroite à droite. Au survol de chaque logo, une **fenêtre contextuelle flottante** affiche le nom du provider à gauche de l'icône (portal `position:fixed` pour passer au-dessus de tous les conteneurs).
-- **Changement de disposition** : uniquement possible avant le premier message envoyé.
-- **Tri** : providers avec favicons connus en tête, ceux en initiales en bas de liste.
+### 3. Sélection de Modèle IA — Double Disposition
+- **Pyramide** : logos centrés, pagination, 5 logos max sans scroll
+- **Sidebar droite** : colonne `#aiProviderSidebar` (72px), scroll vertical, tooltip portal au survol
+- **Bascule de disposition** : uniquement avant le premier message (boutons `#layoutTogglePyramid` / `#layoutToggleSidebar`)
+- **Badge modèle sélectionné** (`#selectedModelBadge`) : apparaît au-dessus de la barre après sélection
+- **Modale de recherche** (`openModelSearchModal`) : filtre par catégorie (Texte, Image, Audio, Vidéo, Tout)
 
-### 4. Blocs de code
-- **Coloration syntaxique** : highlight.js (thème atom-one-dark)
-- **Numérotation des lignes** : plugin `highlightjs-line-numbers.js` — gère correctement les `<span>` multi-lignes
-- **Bouton Copier** : copie le code sans les numéros de ligne ; feedback visuel (icône check 2s)
-- **Scrollbar horizontale** : stylisée en mode clair et sombre
+### 4. Classement Intelligent des Providers
+- Analyse du prompt en temps réel (debounce 300ms)
+- 12 signaux de tâche détectés par regex
+- Poids configurables par provider (`PROVIDER_SIGNALS`)
+- Bonus pour les modèles vision si image jointe
+- Badge contextuel flottant — vertical desktop / horizontal mobile
 
-### 5. Mode "Simplified" (Vue d'accueil)
-- Disparition des éléments inutiles au profit d'une barre centrale pure
-- **Agrandissement Dynamique** : quand l'utilisateur tape un long prompt, la barre s'agrandit et le contenu se décale vers le haut
+### 5. Gestion des Fichiers Joints
+- Trombone → panel mobile ou menu desktop
+- Camera (capture environnement), Photos (galerie), Fichiers (génériques)
+- Thumbnails dans la barre de saisie (72×72 ou pill)
+- Bouton ✕ pour retirer un fichier
+- Fichiers inclus dans la bulle de message à l'envoi
 
-### 6. Menus Contextuels
-- **Zone de chat vide** : clic droit → menu page (copier, coller, etc.)
-- **Bulles de message IA** : clic droit → menu avec actions (Copier, Résumer, Humaniser)
-- **Textarea** : clic droit → Améliorer le prompt, Copier, Tout sélectionner
-- **Sidebar IA (Disposition 1)** : clic droit → changer la disposition (avant premier message uniquement)
+### 6. Chat
+- Bulles `user` (fond subtil, alignée droite) avec vignettes fichiers si joint
+- Bulles `assistant` (pleine largeur, markdown rendu)
+- Actions rapides sous chaque réponse : **Résumer**, **Humaniser**
+- Rendu Markdown : code colorisé hljs + numérotation lignes, bold, italic, inline code
+- Bouton copier sur les blocs de code (feedback 2s)
+- Indicateur de frappe animé (3 points)
+- Auto-nommage de la conversation via IA
 
-### 7. Dropdowns
-- **Qualité** : Maximale / Éco / Eco Ultra (sélection active avec check visuel)
-- **Confidentialité** : Privé / Public (sélection active avec check visuel)
-- Comportement hover + click, fermeture automatique, mise à jour du label du bouton
+### 7. Menus Contextuels
+- **Textarea** : Améliorer le prompt, Copier, Tout sélectionner
+- **Bulles IA** : clic droit → Copier, Résumer, Humaniser
+- **Sidebar conversations** : clic droit → Renommer, Épingler, Supprimer
+- **Sidebar IA (disposition 1)** : clic droit → changer disposition
 
-### 8. Raccourcis Clavier
+### 8. Éditeur de Brouillon (mobile)
+- Ouverture de la barre de saisie en plein écran sur mobile
+- Bouton d'édition `#editBtn`
+
+### 9. Raccourcis Clavier
 
 | Raccourci | Action |
 |-----------|--------|
@@ -251,7 +287,31 @@ Script chargé en premier, contient deux parties :
 | `Ctrl+N` | Nouveau chat |
 | `Ctrl+K` | Rechercher des conversations |
 | `/` | Recherche rapide (hors champ texte) |
-| `Escape` | Ferme le modal le plus au-dessus (hiérarchie : suppression → renommage → paramètres → brouillon → recherche → sélecteur de modèles) |
+| `Escape` | Ferme le modal le plus au-dessus |
+
+---
+
+## 🏗️ Architecture de l'État Global
+
+```javascript
+const state = {
+    allModels: [],              // Tous les modèles OpenRouter
+    providerMap: {},            // { slug: { name, logoUrl, models[] } } — ordonnable
+    providerDisplayNames: {},   // Noms extraits de l'API
+    selectedProvider: null,     // Slug fournisseur en cours
+    selectedProviderSlug: null, // Slug sauvegardé après sélection modèle
+    selectedModel: null,        // ID modèle sélectionné (ex: "openai/gpt-4o")
+    providerLayout: 'sidebar',  // 'sidebar' | 'pyramid'
+    currentConversationId: null,// UUID conversation Supabase
+    chatMessages: [],           // Historique pour contexte API
+    conversations: [],          // Liste sidebar
+    ctxConversationId: null,    // Conversation ciblée par menu contextuel
+    isSending: false,           // Verrou anti-double envoi
+    conversationStarted: false, // Bascule accueil → chat
+    titleAutoSet: false,        // Empêche renommage multiple
+    pendingFiles: [],           // Fichiers joints en attente d'envoi
+};
+```
 
 ---
 
@@ -259,51 +319,74 @@ Script chargé en premier, contient deux parties :
 
 | Optimisation | Description |
 |--------------|-------------|
-| **Cache API** | `sessionStorage` avec TTL de 30 min pour les modèles OpenRouter |
-| **DocumentFragment** | Insertion batch des éléments DOM (providers, modèles) |
-| **Séparation des fichiers** | CSS / JS séparés pour une meilleure maintenabilité et mise en cache |
-| **Favicon dynamique** | Généré via Canvas avec coins arrondis depuis `logo.png` |
-| **Logos dynamiques** | Google Favicon API avec mapping `DOMAINS` précis |
-| **Noms dynamiques** | Extraits automatiquement des données de l'API (préfixe avant `:`) |
-| **Fallback initiales** | Couleurs HSL uniques par hash pour les logos manquants |
-| **Tooltip portal** | `position:fixed` + `getBoundingClientRect()` pour passer au-dessus de tout conteneur |
+| **Cache API versionnée** | `sessionStorage` clé `openrouter_models_v{N}`, TTL 30 min |
+| **DocumentFragment** | Insertion batch des providers/modèles dans le DOM |
+| **Debounce ranking** | Classement IA déclenché 300ms après arrêt de frappe |
+| **Snapshot providerMap** | `_defaultProviderOrder` sauvegardé une seule fois (pas de tri répété) |
+| **Object URL** | `URL.createObjectURL()` pour les thumbnails (zéro upload) |
+| **Favicon dynamique** | Canvas avec coins arrondis depuis `logo.png` |
+| **Tooltip portal** | `position:fixed` + `getBoundingClientRect()` pour éviter le clipping |
+| **Realtime Supabase** | Souscription unique aux events `conversations` |
+| **Cache favicon** | `iconCache{}` pour les initiales générées (calcul canvas évité) |
+| **Versioning CSS/JS** | Paramètre `?v=N` dans `index.html` pour vider le cache navigateur |
+
+---
+
+## 📱 Optimisations Mobile
+
+| Élément | Comportement mobile |
+|---------|---------------------|
+| Sidebar gauche | Masquée par défaut, swipe pour ouvrir |
+| Animation splash | Swipe/clic bloqué pendant l'animation |
+| Barre d'input | Full-width, boutons optimisés tactile |
+| Éditeur brouillon | Plein écran au clic sur `#editBtn` |
+| Panel trombone | Flottant bas-gauche (pas plein écran), scroll interne |
+| Badge classement | **Masqué** (exclusif desktop) |
+| Modales | Plein écran sur mobile (searchModal, modelSearchModal) |
+| Textarea auto-resize | Hauteur auto via `scrollHeight`, max 160px mobile |
 
 ---
 
 ## 🌐 Compatibilité
 
-- **Navigateurs** : Chrome, Firefox, Safari, Edge (récents)
-- **Responsive** : adaptation mobile avec sidebar masquable et header mobile
-- **Écran minimum** : 320px de largeur
-
----
-
-## 📝 Notes de développement
-
-- Le projet utilise Tailwind CSS via CDN (pas de build nécessaire)
-- Le chat fonctionne via Supabase Edge Function (clé API sécurisée côté serveur)
-- Les conversations et messages sont sauvegardés dans Supabase DB
-- Envoi : clic sur le bouton ou Ctrl+Enter
-- Les boutons de changement de disposition sont gérés de manière centralisée par `updateLayoutToggleButtons()`
+- **Navigateurs** : Chrome, Firefox, Safari, Edge (versions récentes)
+- **Responsive** : adapté mobile (< 768px) et desktop
+- **Écran minimum** : 320px
 
 ---
 
 ## 🔧 Changelog
 
+### 19 mars 2026 — v#15
+- **Badge classement IA** : Désactivation complète sur mobile. Désormais exclusif au desktop pour éviter l'encombrement visuel.
+- **Badge classement IA repositionné** : vertical à gauche du sidebar IA sur desktop, `pointer-events:none`
+- **Fichiers joints dans l'input bar** : thumbnails 72×72 dans `#inputFilesPreview` (dessus du textarea), ✕ individuel, workflow envoi correct
+- **`addMessageBubble()` refactorée** : accepte `files[]` comme 3ème argument, backward-compatible avec `scroll` boolean
+- **`state.pendingFiles`** : tableau accumulant les fichiers avant envoi, nettoyé après `handleSend()`
+- **`handleSend()` mis à jour** : supporte l'envoi sans texte (fichiers seuls), nettoie la preview après envoi
+- **Moteur de classement IA** (`rankProvidersByPrompt`) : 12 signaux, pondération par provider, debounce 300ms, restoration de l'ordre par défaut quand textarea vide
+- **`renderInputFilePreviews()`** : insertion avant `#inputControlsRow` (structure `flex-col` correcte)
+- **Structure `#inputBar` refaite** : `flex-col` avec `#inputControlsRow` pour séparer thumbnails et contrôles
+
+### 16 mars 2026
+- **Panneau trombone mobile** : panel flottant bas-gauche (pas plein écran), Caméra/Photos/Fichiers fonctionnels
+- **Éditeur brouillon mobile** : plein écran avec fond noir, bouton d'envoi circulaire
+- **Dark theme** : application globale dark mode
+- **Titre mobile** : ajustement taille/position d'une ligne
+
 ### 09 mars 2026
-- **Numérotation des lignes** : plugin officiel `highlightjs-line-numbers.js` — résout le bug d'alignement des numéros sur les tokens hljs multi-lignes
-- **Favicons IA** : mapping `DOMAINS` mis à jour avec les vrais domaines produits (`chatgpt.com`, `claude.ai`, `gemini.google.com`, `meta.ai`…)
-- **Tri des providers** : ceux avec un favicon connu apparaissent en haut, ceux en initiales en bas
-- **Tooltip provider (Disposition 1)** : implémentation portal `position:fixed` pour passer au-dessus de tous les conteneurs — affiche le nom de l'IA à gauche du logo au survol
-- **Disposition 2** : suppression complète de tout tooltip/flèche au survol des icônes
-- **Espacement boutons sidebar** : bouton Recherche repositionné à `bottom:80px` (plus de chevauchement avec le bouton Disposition)
+- **Numérotation lignes** : plugin `highlightjs-line-numbers.js` — résout l'alignement multi-lignes
+- **Favicons IA** : mapping `DOMAINS` mis à jour (chatgpt.com, claude.ai, gemini.google.com…)
+- **Tri providers** : favicon connu en tête, initiales en bas
+- **Tooltip provider (Sidebar)** : portal `position:fixed` — affiche le nom à gauche du logo au survol
+- **Espacement boutons sidebar** : repositionnement pour éviter le chevauchement
 
 ### 03 mars 2026 — Audit complet
-- **Ctrl+Enter** pour envoyer les messages
-- **Bouton copier** sur les blocs de code générés par l'IA
-- **Dropdowns fonctionnels** : sélection Qualité/Confidentialité avec check visuel
-- **38 bugs corrigés** : envoi clavier, réinitialisation modèle, hiérarchie Escape, XSS, positionnement pyramide…
+- **Ctrl+Enter** pour envoyer
+- **Bouton Copier** sur les blocs de code
+- **Dropdowns fonctionnels** : Qualité / Confidentialité
+- **38 bugs corrigés** : envoi clavier, réinitialisation modèle, hiérarchie Escape, XSS, pyramide…
 
 ---
 
-*Dernière mise à jour : 09 mars 2026*
+*Dernière mise à jour : 19 mars 2026 — v#14*

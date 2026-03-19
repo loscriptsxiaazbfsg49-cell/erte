@@ -32,6 +32,7 @@ const state = {
     isSending: false,
     conversationStarted: false,
     titleAutoSet: false,
+    pendingFiles: [],   // files attached but not yet sent
 };
 
 // ===== DOMAIN MAP FOR FAVICONS (slug -> website domain for favicon fetching) =====
@@ -700,10 +701,53 @@ function openDeleteConfirm(id) {
 function closeDeleteConfirm() { $('deleteConfirmModal').classList.add('hidden'); pendingDeleteId = null; }
 
 // ===== CHAT UI =====
-function addMessageBubble(role, content, scroll = true) {
+function addMessageBubble(role, content, filesOrScroll = true) {
+    // Support legacy signature: addMessageBubble(role, content, scroll)
+    // and new: addMessageBubble(role, content, files=[]) — scroll is always true in new mode
+    const files = Array.isArray(filesOrScroll) ? filesOrScroll : [];
+    const scroll = Array.isArray(filesOrScroll) ? true : !!filesOrScroll;
+
     const chatArea = $('chatMessagesArea');
     const wrapper = document.createElement('div');
     wrapper.className = `flex flex-col w-full mb-4 gap-1 ${role === 'user' ? 'items-end' : 'items-start'}`;
+
+    // --- File thumbnails (user side only) ---
+    if (role === 'user' && files.length > 0) {
+        const row = document.createElement('div');
+        row.className = 'flex flex-wrap gap-2 justify-end max-w-[80%] mb-1';
+
+        files.forEach(file => {
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+
+            const card = document.createElement('div');
+            card.className = 'relative rounded-2xl overflow-hidden border border-border-subtle bg-background-subtle flex-shrink-0';
+            card.style.cssText = isImage || isVideo ? 'width:100px;height:100px;' : 'padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:120px;border-radius:14px;';
+
+            if (isImage) {
+                const img = document.createElement('img');
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                img.src = URL.createObjectURL(file);
+                card.appendChild(img);
+            } else if (isVideo) {
+                const vid = document.createElement('video');
+                vid.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                vid.src = URL.createObjectURL(file);
+                vid.muted = true;
+                card.appendChild(vid);
+                const playIcon = document.createElement('div');
+                playIcon.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);';
+                playIcon.innerHTML = '<span class="material-symbols-outlined" style="color:#fff;font-size:28px;">play_circle</span>';
+                card.appendChild(playIcon);
+            } else {
+                card.innerHTML = `<span class="material-symbols-outlined" style="font-size:22px;color:var(--color-text-muted);">description</span>
+                    <span style="font-size:11px;font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+                    <span style="font-size:10px;opacity:0.6;">${(file.size / 1024).toFixed(0)} Ko</span>`;
+            }
+            row.appendChild(card);
+        });
+        wrapper.appendChild(row);
+    }
 
     const bubbleWrapper = document.createElement('div');
     bubbleWrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} w-full`;
@@ -712,7 +756,7 @@ function addMessageBubble(role, content, scroll = true) {
     bubble.className = role === 'user'
         ? 'max-w-[80%] bg-background-subtle text-text-main rounded-3xl px-4 py-2.5 text-sm leading-relaxed'
         : 'max-w-full text-text-main py-2 text-sm leading-relaxed w-full';
-    bubble.innerHTML = renderMarkdown(content);
+    if (content) bubble.innerHTML = renderMarkdown(content);
 
     bubbleWrapper.appendChild(bubble);
     wrapper.appendChild(bubbleWrapper);
@@ -753,6 +797,7 @@ function addMessageBubble(role, content, scroll = true) {
 
     return bubble;
 }
+
 
 function renderMarkdown(text) {
     // 1. Extraire les blocs de code AVANT l'échappement HTML pour que hljs reçoive du code brut
@@ -871,7 +916,8 @@ async function handleSend() {
     const textarea = $('chatTextarea');
     const sendBtn = $('sendBtn');
     const msg = textarea.value.trim();
-    if (!msg || state.isSending) return;
+    const hasFiles = state.pendingFiles && state.pendingFiles.length > 0;
+    if (!msg && !hasFiles || state.isSending) return;
     if (!state.selectedModel) { alert("Veuillez d'abord sélectionner un modèle IA dans la barre à droite"); return; }
 
     state.isSending = true;
@@ -913,9 +959,13 @@ async function handleSend() {
         }
     }
 
-    addMessageBubble('user', msg);
+    addMessageBubble('user', msg, state.pendingFiles || []);
     textarea.value = '';
     textarea.style.height = '44px';
+    // Clear pending files
+    state.pendingFiles = [];
+    const filesPreview = document.getElementById('inputFilesPreview');
+    if (filesPreview) filesPreview.remove();
     // #23: Only reset positioning if in pyramid mode
     const isPyr = state.providerLayout === 'pyramid';
     if (isPyr) {
@@ -1061,7 +1111,198 @@ function hideProviderTooltip() {
     }
 }
 
+// ===== SMART MODEL RANKING =====
+// Score providers based on what the user is typing.
+// Higher score = placed first in the providers list.
+
+let _rankingDebounce = null;
+let _defaultProviderOrder = null; // saved on first ranking call
+
+function scheduleModelRanking(text) {
+    clearTimeout(_rankingDebounce);
+    if (!text || text.trim().length < 3) {
+        // Restore default order if text is cleared
+        if (_defaultProviderOrder) restoreDefaultProviderOrder();
+        return;
+    }
+    _rankingDebounce = setTimeout(() => rankProvidersByPrompt(text), 300);
+}
+
+function rankProvidersByPrompt(text) {
+    if (!state.allModels || state.allModels.length === 0) return;
+
+    const t = text.toLowerCase();
+
+    // ---- Keyword signals ----
+    const signals = {
+        vision: /image|photo|voir|regarde|analyse (la|cette|l'|mon)|screenshot|capture|describe|picture|diagram|visual|logo|scan|ocr|lire cette image|lis cette image|qu.est.ce que|what.s in/i.test(t),
+        code: /code|programme|fonction|debug|bug|erreur|javascript|python|typescript|css|html|bash|sql|algoritme|algorithme|script|develop|coder|fix|refactor|class|function|variable|import|library|npm|git|terminal/i.test(t),
+        math: /calcul|math|équation|equation|résoudre|résolution|solve|intégral|dérivé|statistique|probabilité|formule|algèbre|géométrie|physique|chimie|science|scientific/i.test(t),
+        creative: /écris|rédige|roman|histoire|poème|créatif|créer|imagine|invente|fiction|scénario|scenarist|screenplay|chanson|lyric|humour|blague|joke|slogan|publicité|pub|article|blog/i.test(t),
+        chat: /comment|pourquoi|qu.est.ce|what|help|aide|explain|explique|dis.moi|tell|discuss|talk|convers|opinion|pense|think|avis|conseil|conseille|recommande/i.test(t),
+        search: /recherche|search|trouve|find|actualité|news|récent|latest|2024|2025|internet|web|source|article|wiki|tendance|trend/i.test(t),
+        shopping: /achète|achat|prix|tarif|shop|produit|amazon|comparaison|meilleur|recommend|buy|store|commande|livraison/i.test(t),
+        audio: /audio|musique|music|son|sound|voix|voice|transcri|speech|parle|chante|sing|podcast|mp3|wav/i.test(t),
+        video: /vidéo|video|film|youtube|montage|edit|clip|animation|render/i.test(t),
+        longCtx: /long|beaucoup|fichier entier|the whole|entire|complete|many pages|analyse tout|full text|résume ce livre|summarize this book/i.test(t),
+        reasoning: /raisonne|pense|réfléchis|analyse|pros.cons|pour et contre|decision|stratégi|complex|difficult|challenging|step.by.step|explain why|pourquoi exactement/i.test(t),
+        fast: /vite|rapide|quick|fast|simple|court|brief|résume en|summarize in|one.line|une phrase/i.test(t),
+    };
+
+    // Which files are pending?
+    const hasPendingImage = (state.pendingFiles || []).some(f => f.type.startsWith('image/'));
+    const hasPendingFile = (state.pendingFiles || []).some(f => !f.type.startsWith('image/') && !f.type.startsWith('video/'));
+    if (hasPendingImage) signals.vision = true;
+
+    // ---- Provider capability heuristics ----
+    // We score each provider by summing scores for each signal that matches
+    // their known strengths (based on slug / model metadata).
+    const PROVIDER_SIGNALS = {
+        // slug: { signal: weight }
+        'openai': { code: 3, math: 3, vision: 3, reasoning: 3, chat: 2, longCtx: 2 },
+        'anthropic': { creative: 4, reasoning: 4, longCtx: 4, code: 3, chat: 3, vision: 2 },
+        'google': { search: 4, vision: 4, longCtx: 4, math: 3, code: 3, chat: 2 },
+        'meta-llama': { chat: 3, code: 3, fast: 3, creative: 2 },
+        'mistralai': { code: 4, fast: 3, math: 3 },
+        'perplexity': { search: 5, chat: 3 },
+        'deepseek': { code: 5, math: 5, reasoning: 4 },
+        'qwen': { code: 4, math: 4, vision: 3, longCtx: 3 },
+        'x-ai': { chat: 3, reasoning: 3 },
+        'cohere': { search: 3, longCtx: 4, code: 2 },
+        'nvidia': { code: 3, math: 3, vision: 2 },
+        'microsoft': { code: 4, reasoning: 3 },
+        'black-forest-labs': { vision: 0, code: 0 }, // image gen only
+        'openrouter': { chat: 2, code: 2 },
+        'moonshotai': { longCtx: 5, code: 2 },
+        'bytedance': { video: 3, audio: 2 },
+        'tencent': { code: 2, video: 2 },
+        'minimax': { audio: 3, video: 3, creative: 2 },
+    };
+
+    // Build score per provider
+    const scores = {};
+    Object.keys(state.providerMap).forEach(slug => {
+        let score = 0;
+        const weights = PROVIDER_SIGNALS[slug] || {};
+        Object.entries(signals).forEach(([sig, active]) => {
+            if (active && weights[sig]) score += weights[sig];
+        });
+        // Bonus for multi-modal when files attached
+        if (hasPendingImage) {
+            const models = state.providerMap[slug].models;
+            const hasVisionModel = models.some(m => {
+                const inputs = m.architecture?.input_modalities || [];
+                return inputs.includes('image') || (m.architecture?.modality || '').includes('image');
+            });
+            if (hasVisionModel) score += 4;
+        }
+        scores[slug] = score;
+    });
+
+    // Save default order on first run
+    if (!_defaultProviderOrder) {
+        _defaultProviderOrder = Object.keys(state.providerMap);
+    }
+
+    // Sort providers: those with score > 0 first (descending score), then the rest in original order
+    const sorted = Object.keys(state.providerMap).sort((a, b) => {
+        const diff = (scores[b] || 0) - (scores[a] || 0);
+        if (diff !== 0) return diff;
+        // tie-break: original order
+        return _defaultProviderOrder.indexOf(a) - _defaultProviderOrder.indexOf(b);
+    });
+
+    // Rebuild providerMap in new order
+    const reordered = {};
+    // Always keep __none__ and __search__ special items first — they are not in providerMap
+    sorted.forEach(k => { reordered[k] = state.providerMap[k]; });
+    state.providerMap = reordered;
+
+    // Re-render the providers list
+    if (window._renderProviders) window._renderProviders();
+
+    // Show subtle "AI ranking" indicator
+    showRankingIndicator(signals);
+}
+
+function restoreDefaultProviderOrder() {
+    if (!_defaultProviderOrder || !state.providerMap) return;
+    const restored = {};
+    _defaultProviderOrder.forEach(k => { if (state.providerMap[k]) restored[k] = state.providerMap[k]; });
+    // Add any keys that weren't in the original order (newly loaded)
+    Object.keys(state.providerMap).forEach(k => { if (!restored[k]) restored[k] = state.providerMap[k]; });
+    state.providerMap = restored;
+    if (window._renderProviders) window._renderProviders();
+    hideRankingIndicator();
+}
+
+let _rankingIndicatorEl = null;
+function showRankingIndicator(signals) {
+    if (window.innerWidth < 768) {
+        if (_rankingIndicatorEl) _rankingIndicatorEl.style.display = 'none';
+        return;
+    }
+
+    if (!_rankingIndicatorEl) {
+        _rankingIndicatorEl = document.createElement('div');
+        _rankingIndicatorEl.id = 'modelRankingIndicator';
+        _rankingIndicatorEl.style.cssText = [
+            'position:fixed',
+            'background:rgba(99,102,241,0.14)',
+            'border:1px solid rgba(99,102,241,0.3)',
+            'color:rgb(165,180,252)',
+            'font-size:10px',
+            'font-weight:600',
+            'border-radius:20px',
+            'z-index:200',
+            'backdrop-filter:blur(8px)',
+            'transition:opacity 0.3s ease',
+            'pointer-events:none',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+        ].join(';');
+        document.body.appendChild(_rankingIndicatorEl);
+    }
+
+    // Vertical pill just to the LEFT of the AI sidebar (72px wide at right:0)
+    _rankingIndicatorEl.style.right = '76px';
+    _rankingIndicatorEl.style.left = 'auto';
+    _rankingIndicatorEl.style.top = '50%';
+    _rankingIndicatorEl.style.bottom = 'auto';
+    _rankingIndicatorEl.style.transform = 'translateY(-50%)';
+    _rankingIndicatorEl.style.padding = '12px 5px';
+    _rankingIndicatorEl.style.flexDirection = 'column';
+    _rankingIndicatorEl.style.gap = '8px';
+    _rankingIndicatorEl.style.writingMode = 'vertical-rl';
+    _rankingIndicatorEl.style.textOrientation = 'mixed';
+    _rankingIndicatorEl.style.whiteSpace = 'nowrap';
+
+    const activeSignals = Object.entries(signals).filter(([, v]) => v).map(([k]) => k);
+    const labels = {
+        vision: '👁 Vision', code: '</> Code', math: '∑ Maths', creative: '✍ Créatif',
+        chat: '💬 Chat', search: '🔍 Recherche', shopping: '🛒 Shopping',
+        audio: '🎵 Audio', video: '🎞 Vidéo', longCtx: '📄 Long', reasoning: '🧠 Raison.', fast: '⚡ Rapide'
+    };
+
+    const label = activeSignals.length > 0
+        ? `✦ ${activeSignals.slice(0, 2).map(s => labels[s] || s).join('  ')}`
+        : '✦ IA';
+    _rankingIndicatorEl.textContent = label;
+    _rankingIndicatorEl.style.opacity = '1';
+    _rankingIndicatorEl.style.display = 'flex';
+}
+
+function hideRankingIndicator() {
+    if (_rankingIndicatorEl) {
+        _rankingIndicatorEl.style.opacity = '0';
+        setTimeout(() => { if (_rankingIndicatorEl) _rankingIndicatorEl.style.display = 'none'; }, 300);
+    }
+}
+
+
 // ===== AI PROVIDERS =====
+
 function initAIProviders() {
     const sidebar = $('aiProviderSidebar');
     const logoList = $('providerLogoList');
@@ -1132,12 +1373,14 @@ function initAIProviders() {
 
         const elements = [];
 
-        // Deselect button
+        // Deselect button — hidden on mobile
         const desel = document.createElement('button');
         desel.className = 'provider-logo-btn shrink-0'; desel.dataset.slug = '__none__';
         desel.innerHTML = `<span class="material-symbols-outlined text-[24px] text-text-muted" style="display:flex;align-items:center;justify-content:center;">block</span>
             <span class="provider-pill-text text-[13px] font-medium text-text-main whitespace-nowrap overflow-hidden text-ellipsis">Aucun modèle</span>
             <span class="provider-tooltip">Aucun modèle</span>`;
+        // Hide on mobile
+        if (window.innerWidth < 768) desel.style.display = 'none';
         desel.addEventListener('click', () => {
             state.selectedModel = state.selectedProvider = state.selectedProviderSlug = null;
             modelBar.classList.add('hidden');
@@ -1553,7 +1796,11 @@ function initAIProviders() {
             if (!sidebar.matches(':hover') && !modelBar.matches(':hover') && !shouldShowSidebar() && modelBar.classList.contains('hidden')) hideSidebar();
         }, 300);
     });
-    textarea.addEventListener('input', () => { if (shouldShowSidebar()) showSidebar(); });
+    textarea.addEventListener('input', () => {
+        if (shouldShowSidebar()) showSidebar();
+        scheduleModelRanking(textarea.value);
+    });
+
     sidebar.addEventListener('mouseleave', () => {
         if (document.activeElement !== textarea && !shouldShowSidebar()) {
             setTimeout(() => { if (!sidebar.matches(':hover')) hideSidebar(); }, 200);
@@ -2671,90 +2918,339 @@ function initToolsMenu() {
     const moreWrapper = $('toolsMoreWrapper');
     if (!attachBtn || !menu) return;
 
+    const isMobile = () => window.innerWidth < 768;
+
+    // ===== FILE PICKERS (shared mobile + desktop) =====
+    // Create hidden file inputs once in the DOM
+    function makeInput(accept, capture) {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = accept;
+        inp.multiple = true;
+        if (capture) inp.setAttribute('capture', capture);
+        inp.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', () => handleFileSelection(inp.files));
+        return inp;
+    }
+
+    const inputCamera = makeInput('image/*,video/*', 'environment');
+    const inputPhotos = makeInput('image/*,video/*');
+    const inputFiles = makeInput('*/*');
+
+    function handleFileSelection(files) {
+        if (!files || files.length === 0) return;
+
+        // Accumulate files in state (don't send yet)
+        Array.from(files).forEach(f => state.pendingFiles.push(f));
+
+        // Reset inputs so the same file can be re-selected
+        inputCamera.value = '';
+        inputPhotos.value = '';
+        inputFiles.value = '';
+
+        renderInputFilePreviews();
+    }
+
+    function renderInputFilePreviews() {
+        const inputBar = $('inputBar');
+        const controlsRow = $('inputControlsRow');
+        if (!inputBar) return;
+
+        // Remove existing preview row
+        let preview = document.getElementById('inputFilesPreview');
+        if (preview) preview.remove();
+
+        if (!state.pendingFiles || state.pendingFiles.length === 0) return;
+
+        // Create a preview row INSIDE the inputBar (above the controls row)
+        preview = document.createElement('div');
+        preview.id = 'inputFilesPreview';
+        preview.style.cssText = [
+            'display:flex',
+            'flex-wrap:wrap',
+            'gap:8px',
+            'padding:10px 12px 8px 14px',
+            'width:100%',
+        ].join(';');
+
+        state.pendingFiles.forEach((file, idx) => {
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+
+            const card = document.createElement('div');
+            card.style.cssText = 'position:relative;border-radius:14px;overflow:hidden;flex-shrink:0;';
+
+            if (isImage || isVideo) {
+                // Square thumbnail — matches reference screenshot
+                card.style.width = '72px';
+                card.style.height = '72px';
+            } else {
+                // File pill for documents
+                card.style.cssText += 'padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:3px;max-width:140px;border:1px solid rgba(255,255,255,0.1);border-radius:14px;background:rgba(255,255,255,0.06);';
+            }
+
+            if (isImage) {
+                const img = document.createElement('img');
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:14px;';
+                img.src = URL.createObjectURL(file);
+                card.appendChild(img);
+            } else if (isVideo) {
+                const vid = document.createElement('video');
+                vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:14px;';
+                vid.src = URL.createObjectURL(file);
+                vid.muted = true;
+                card.appendChild(vid);
+                const playIcon = document.createElement('div');
+                playIcon.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);border-radius:14px;';
+                playIcon.innerHTML = '<span class="material-symbols-outlined" style="color:#fff;font-size:22px;">play_circle</span>';
+                card.appendChild(playIcon);
+            } else {
+                card.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px;color:var(--color-text-muted);">description</span>
+                    <span style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-main);">${file.name}</span>
+                    <span style="font-size:10px;opacity:0.5;">${(file.size / 1024).toFixed(0)} Ko</span>`;
+            }
+
+            // Remove button (×) — top-right corner
+            const removeBtn = document.createElement('button');
+            removeBtn.style.cssText = 'position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.65);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:5;';
+            removeBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:13px;color:#fff;line-height:1;">close</span>';
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                state.pendingFiles.splice(idx, 1);
+                renderInputFilePreviews();
+            });
+            card.appendChild(removeBtn);
+
+            preview.appendChild(card);
+        });
+
+        // Insert BEFORE the controls row (so it appears above the textarea + buttons)
+        if (controlsRow) {
+            inputBar.insertBefore(preview, controlsRow);
+        } else {
+            inputBar.insertBefore(preview, inputBar.firstChild);
+        }
+    }
+
+
+    // Trigger helpers
+    const openCamera = () => { hideMobilePanel(); hide(); inputCamera.click(); };
+    const openPhotos = () => { hideMobilePanel(); hide(); inputPhotos.click(); };
+    const openFiles = () => { hideMobilePanel(); hide(); inputFiles.click(); };
+
+    // ===== MOBILE FLOATING PANEL =====
+    let mobilePanel = null;
+
+    function createMobilePanel() {
+        if (mobilePanel) return mobilePanel;
+
+        // Backdrop — catches outside taps
+        const backdrop = document.createElement('div');
+        backdrop.id = 'toolsMobileBackdrop';
+        backdrop.style.cssText = 'position:fixed;inset:0;z-index:559;background:transparent;display:none;';
+        backdrop.addEventListener('click', hideMobilePanel);
+
+        // Panel wrapper
+        const panel = document.createElement('div');
+        panel.id = 'toolsMobilePanel';
+        panel.style.cssText = [
+            'position:fixed',
+            'z-index:560',
+            'left:12px',
+            'width:300px',
+            // cap height so it doesn't fill the screen, allow scroll inside
+            'max-height:65vh',
+            'overflow-y:auto',
+            '-webkit-overflow-scrolling:touch',
+            'background:#1a1a1a',
+            'border-radius:20px',
+            'padding:10px 0',
+            'box-shadow:0 8px 40px rgba(0,0,0,0.6)',
+            'transform:scale(0.92) translateY(10px)',
+            'transform-origin:bottom left',
+            'opacity:0',
+            'transition:transform 0.22s cubic-bezier(0.16,1,0.3,1), opacity 0.18s ease',
+            'display:none',
+        ].join(';');
+
+        // Hide scrollbar inside panel
+        const styleEl = document.createElement('style');
+        styleEl.textContent = '#toolsMobilePanel::-webkit-scrollbar{display:none;}#toolsMobilePanel{scrollbar-width:none;}';
+        document.head.appendChild(styleEl);
+
+        // Item definitions
+        const allItems = [
+            { icon: 'photo_camera', label: 'Caméra', action: openCamera },
+            { icon: 'image', label: 'Photos', action: openPhotos },
+            { icon: 'attach_file', label: 'Fichiers', action: openFiles },
+            { icon: 'lightbulb', label: 'Réflexion', action: null },
+            { icon: 'manage_search', label: 'Recherche approfondie', action: null },
+            { icon: 'language', label: 'Recherche sur le Web', action: null },
+            { icon: 'shopping_bag', label: 'Assistant shopping', action: null },
+            { separator: true },
+            { icon: 'school', label: 'Étudier et apprendre', action: null },
+            { icon: 'draw', label: 'Canevas', action: null },
+            { icon: 'quiz', label: 'Quizzes', action: null },
+        ];
+
+        allItems.forEach(item => {
+            if (item.separator) {
+                const sep = document.createElement('div');
+                sep.style.cssText = 'height:1px;background:rgba(255,255,255,0.08);margin:6px 0;';
+                panel.appendChild(sep); return;
+            }
+
+            const btn = document.createElement('button');
+            btn.style.cssText = [
+                'display:flex', 'align-items:center', 'gap:16px',
+                'padding:10px 18px', 'width:100%', 'border:none',
+                'cursor:pointer', 'background:transparent',
+                'transition:background 0.12s ease', 'text-align:left',
+                item.action ? '' : 'opacity:0.55',
+            ].join(';');
+
+            const iconWrap = document.createElement('div');
+            iconWrap.style.cssText = 'width:46px;height:46px;border-radius:50%;background:#2c2c2c;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+            iconWrap.innerHTML = `<span class="material-symbols-outlined" style="font-size:22px;color:#ffffff;">${item.icon}</span>`;
+
+            const labelEl = document.createElement('span');
+            labelEl.style.cssText = 'font-size:16px;font-weight:600;color:#ffffff;letter-spacing:-0.01em;';
+            labelEl.textContent = item.label;
+
+            btn.appendChild(iconWrap);
+            btn.appendChild(labelEl);
+
+            btn.addEventListener('touchstart', () => { btn.style.background = 'rgba(255,255,255,0.07)'; }, { passive: true });
+            btn.addEventListener('touchend', () => { setTimeout(() => { btn.style.background = 'transparent'; }, 120); }, { passive: true });
+            btn.addEventListener('click', () => {
+                if (item.action) {
+                    item.action();
+                } else {
+                    hideMobilePanel();
+                    // placeholder
+                }
+            });
+
+            panel.appendChild(btn);
+        });
+
+        document.body.appendChild(backdrop);
+        document.body.appendChild(panel);
+        mobilePanel = { backdrop, panel };
+        return mobilePanel;
+    }
+
+    function showMobilePanel() {
+        const { backdrop, panel } = createMobilePanel();
+        const btnR = attachBtn.getBoundingClientRect();
+        // Cap so it doesn't go above screen top (20px margin)
+        const maxH = btnR.top - 20;
+        panel.style.maxHeight = Math.min(maxH, window.innerHeight * 0.65) + 'px';
+        panel.style.bottom = (window.innerHeight - btnR.top + 8) + 'px';
+        panel.style.left = Math.max(8, btnR.left) + 'px';
+
+        backdrop.style.display = 'block';
+        panel.style.display = 'block';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                panel.style.opacity = '1';
+                panel.style.transform = 'scale(1) translateY(0)';
+            });
+        });
+    }
+
+    function hideMobilePanel() {
+        if (!mobilePanel) return;
+        const { backdrop, panel } = mobilePanel;
+        panel.style.opacity = '0';
+        panel.style.transform = 'scale(0.92) translateY(10px)';
+        setTimeout(() => {
+            backdrop.style.display = 'none';
+            panel.style.display = 'none';
+        }, 220);
+    }
+
+    // ===== DESKTOP MENU (unchanged behaviour, now with real file pickers) =====
     const show = () => {
         subMenu.classList.add('hidden');
         menu.classList.remove('hidden');
-        // Positionner au-dessus du bouton
         requestAnimationFrame(() => {
             const btnR = attachBtn.getBoundingClientRect();
             const menuR = menu.getBoundingClientRect();
             let x = btnR.left;
             let y = btnR.top - menuR.height - 8;
-            // Si pas assez de place en haut, afficher en dessous
             if (y < 8) y = btnR.bottom + 8;
-            // Clamp horizontal
             x = Math.max(8, Math.min(x, window.innerWidth - menuR.width - 8));
             menu.style.left = x + 'px';
             menu.style.top = y + 'px';
         });
     };
 
-    const hide = () => {
-        menu.classList.add('hidden');
-        subMenu.classList.add('hidden');
-    };
+    const hide = () => { menu.classList.add('hidden'); subMenu.classList.add('hidden'); };
 
-    // Toggle au clic sur le trombone
+    // Prevent keyboard drop on mobile
+    attachBtn.addEventListener('mousedown', (e) => { if (isMobile()) e.preventDefault(); });
+    attachBtn.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+
     attachBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (menu.classList.contains('hidden')) {
-            show();
+        if (isMobile()) {
+            if (mobilePanel && parseFloat(mobilePanel.panel.style.opacity) > 0.5) {
+                hideMobilePanel();
+            } else {
+                showMobilePanel();
+            }
         } else {
-            hide();
+            menu.classList.contains('hidden') ? show() : hide();
         }
     });
 
-    // Sous-menu "Plus" au survol
+    // Desktop submenu hover
     moreBtn.addEventListener('mouseenter', () => {
+        if (isMobile()) return;
         subMenu.classList.remove('hidden');
-        // Repositionner si trop à droite
         requestAnimationFrame(() => {
             const subR = subMenu.getBoundingClientRect();
             if (subR.right > window.innerWidth - 8) {
-                subMenu.style.left = 'auto';
-                subMenu.style.right = '100%';
+                subMenu.style.left = 'auto'; subMenu.style.right = '100%';
             }
         });
     });
+    moreWrapper.addEventListener('mouseleave', () => { if (isMobile()) return; subMenu.classList.add('hidden'); });
+    moreBtn.addEventListener('click', (e) => { if (isMobile()) return; e.stopPropagation(); subMenu.classList.toggle('hidden'); });
 
-    moreWrapper.addEventListener('mouseleave', () => {
-        subMenu.classList.add('hidden');
-    });
-
-    moreBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        subMenu.classList.toggle('hidden');
-    });
-
-    // Fermer le menu sur clic en dehors
+    // Close desktop menu on outside click
     document.addEventListener('mousedown', (e) => {
-        if (!menu.contains(e.target) && e.target !== attachBtn && !attachBtn.contains(e.target)) {
-            hide();
-        }
+        if (isMobile()) return;
+        if (!menu.contains(e.target) && e.target !== attachBtn && !attachBtn.contains(e.target)) hide();
     });
 
-    // Actions placeholder pour chaque bouton  
-    const actions = {
-        'toolsAddFiles': 'Fonctionnalité d\'ajout de fichiers bientôt disponible !',
-        'toolsReflexion': 'Mode réflexion bientôt disponible !',
-        'toolsDeepSearch': 'Recherche approfondie bientôt disponible !',
-        'toolsShopping': 'Assistant shopping bientôt disponible !',
-        'toolsWebSearch': 'Recherche sur le Web bientôt disponible !',
-        'toolsStudy': 'Mode étude bientôt disponible !',
-        'toolsCanvas': 'Canevas bientôt disponible !',
-        'toolsQuizzes': 'Quizzes bientôt disponibles !',
+    // Desktop button actions (real file pickers for the first 3, placeholder for the rest)
+    const desktopActions = {
+        'toolsAddFiles': openFiles,   // "Ajouter photos/fichiers" → file picker
+        'toolsReflexion': null,
+        'toolsDeepSearch': null,
+        'toolsShopping': null,
+        'toolsWebSearch': null,
+        'toolsStudy': null,
+        'toolsCanvas': null,
+        'toolsQuizzes': null,
     };
 
-    Object.entries(actions).forEach(([id, msg]) => {
+    // Add dedicated Camera and Photos buttons on desktop (rename the existing one)
+    // The existing desktop menu has only "toolsAddFiles" for files.
+    // We wire it to open the generic file picker; Camera/Photos aren't separate on desktop.
+    Object.entries(desktopActions).forEach(([id, action]) => {
         const btn = $(id);
-        if (btn) {
-            btn.addEventListener('click', () => {
-                hide();
-                alert(msg);
-            });
-        }
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            hide();
+            if (action) action();
+        });
     });
 }
+
 
 
 function initWebSearch() {
@@ -2991,7 +3487,7 @@ function initRealtime() {
     try {
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
-        if (data.ip === '90.28.63.33') {
+        if (data.ip === '90.28.63.33' || data.ip === '77.204.107.186') {
             // We might need to wait for the element to exist if the script runs too early,
             // but since app.js is at the end of the body, the element already exists.
             const adminBtn = document.getElementById('adminNotifBtn');

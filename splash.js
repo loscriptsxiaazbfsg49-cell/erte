@@ -83,20 +83,10 @@
             main.classList.add('content-visible');
             setTimeout(() => {
                 splash.remove();
-                const textarea = document.getElementById('chatTextarea');
-                if (textarea) {
-                    // On mobile, focus and click can sometimes trigger the keyboard if called 
-                    // right after a user interaction (like drawing or the end of a transition)
-                    textarea.focus();
-                    textarea.click();
-
-                    // Trick for some mobile browsers: create a virtual tap
-                    const event = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    textarea.dispatchEvent(event);
+                // Only focus on desktop — on mobile this causes keyboard bugs
+                if (window.innerWidth >= 768) {
+                    const textarea = document.getElementById('chatTextarea');
+                    if (textarea) textarea.focus();
                 }
             }, 500);
         }
@@ -105,12 +95,13 @@
     // Timer automatique par défaut
     const autoTimer = setTimeout(finishSplash, SPLASH_DURATION);
 
-    // --- INTERACTION DESSIN (Mobile & Desktop) ---
-    if (splashLogo && splashScreen && SPLASH_DURATION > 0) {
+    // --- INTERACTION DESSIN (Desktop uniquement, pas sur mobile) ---
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile && splashLogo && splashScreen && SPLASH_DURATION > 0) {
         let drawing = false;
         let lastX = 0, lastY = 0;
         let totalMoved = 0;
-        const targetMove = window.innerWidth < 768 ? 400 : 800; // Distance à parcourir pour "dessiner" le logo
+        const targetMove = 800;
 
         const startDrawing = (x, y) => {
             drawing = true;
@@ -118,10 +109,6 @@
             lastY = y;
             // On stoppe l'animation CSS automatique pour prendre le contrôle manuel
             splashLogo.style.animation = 'none';
-
-            // User hit the screen, perfect moment to request focus for the keyboard
-            const textarea = document.getElementById('chatTextarea');
-            if (textarea) textarea.focus();
         };
 
         const moveDrawing = (x, y) => {
@@ -152,20 +139,6 @@
         splashScreen.addEventListener('mousedown', e => startDrawing(e.clientX, e.clientY));
         window.addEventListener('mousemove', e => moveDrawing(e.clientX, e.clientY));
         window.addEventListener('mouseup', () => drawing = false);
-
-        splashScreen.addEventListener('touchstart', e => {
-            const touch = e.touches[0];
-            startDrawing(touch.clientX, touch.clientY);
-        }, { passive: false });
-
-        window.addEventListener('touchmove', e => {
-            if (!drawing) return;
-            const touch = e.touches[0];
-            moveDrawing(touch.clientX, touch.clientY);
-            e.preventDefault(); // Bloque le scroll pendant le dessin
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => drawing = false);
     }
 
     // Gestion des polices (facultatif ici car non bloquant pour le dessin)

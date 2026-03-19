@@ -53,7 +53,7 @@
     <!-- Line numbers plugin for highlight.js — handles multi-line hljs spans correctly -->
     <script
         src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=1772770001" />
+    <link rel="stylesheet" href="styles.css?v=1772770003" />
     <script>
         if (localStorage.getItem('openrouter_theme') === 'dark' || (!localStorage.getItem('openrouter_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -73,7 +73,7 @@
 <body class="bg-background-light text-text-main antialiased h-screen w-full overflow-hidden simplified-mode">
     <!-- Version de test pour mobile -->
     <div id="versionIndicator"
-        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#8</div>
+        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#15</div>
     <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splash-stage">
@@ -413,33 +413,38 @@
                 class="w-full p-4 md:p-6 pb-4 bg-gradient-to-t from-background-light via-background-light to-transparent shrink-0">
                 <div class="max-w-3xl mx-auto w-full relative">
                     <div id="inputBar"
-                        class="relative flex items-end gap-2 bg-background-subtle border border-border-subtle rounded-[2rem] p-2 pr-2 shadow-sm focus-within:ring-1 focus-within:ring-primary/10 focus-within:border-border-subtle transition-all duration-200">
-                        <button id="attachBtn"
-                            class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors shrink-0 ml-1"
-                            title="Ajouter des fichiers et plus encore">
-                            <span class="material-symbols-outlined text-[22px]">attach_file</span>
-                        </button>
-                        <textarea id="chatTextarea"
-                            class="w-full bg-transparent border-none py-2.5 px-1 text-text-main placeholder:text-text-muted focus:ring-0 resize-none overflow-y-auto flex-1"
-                            placeholder="Envoyer..." rows="1" style="height: 44px;"></textarea>
-                        <div class="flex items-center gap-1.5 mr-1 shrink-0">
-                            <!-- Bouton Éditer (Crayon) -->
-                            <button id="editBtn"
-                                class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
-                                title="Modifier">
-                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                        class="relative flex flex-col gap-0 bg-background-subtle border border-border-subtle rounded-[2rem] p-2 pr-2 shadow-sm focus-within:ring-1 focus-within:ring-primary/10 focus-within:border-border-subtle transition-all duration-200">
+                        <!-- File previews are injected here by JS as #inputFilesPreview -->
+
+                        <!-- Controls row: attach + textarea + action buttons -->
+                        <div id="inputControlsRow" class="flex items-end gap-2 w-full">
+                            <button id="attachBtn"
+                                class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors shrink-0 ml-1"
+                                title="Ajouter des fichiers et plus encore">
+                                <span class="material-symbols-outlined text-[22px]">attach_file</span>
                             </button>
-                            <!-- Bouton Vocale -->
-                            <button
-                                class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
-                                title="Saisie vocale">
-                                <span class="material-symbols-outlined text-[22px]">mic</span>
-                            </button>
-                            <!-- Bouton Envoyer -->
-                            <button id="sendBtn"
-                                class="h-10 w-10 flex items-center justify-center bg-primary text-primary-content rounded-full hover:bg-primary/90 transition-colors shadow-md shadow-primary/20 disabled:opacity-50 disabled:shadow-none">
-                                <span class="material-symbols-outlined text-[20px]">arrow_upward</span>
-                            </button>
+                            <textarea id="chatTextarea"
+                                class="w-full bg-transparent border-none py-2.5 px-1 text-text-main placeholder:text-text-muted focus:ring-0 resize-none overflow-y-auto flex-1"
+                                placeholder="Envoyer..." rows="1" style="height: 44px;"></textarea>
+                            <div class="flex items-center gap-1.5 mr-1 shrink-0">
+                                <!-- Bouton Éditer (Crayon) -->
+                                <button id="editBtn"
+                                    class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
+                                    title="Modifier">
+                                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                                </button>
+                                <!-- Bouton Vocale -->
+                                <button
+                                    class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
+                                    title="Saisie vocale">
+                                    <span class="material-symbols-outlined text-[22px]">mic</span>
+                                </button>
+                                <!-- Bouton Envoyer -->
+                                <button id="sendBtn"
+                                    class="h-10 w-10 flex items-center justify-center bg-primary text-primary-content rounded-full hover:bg-primary/90 transition-colors shadow-md shadow-primary/20 disabled:opacity-50 disabled:shadow-none">
+                                    <span class="material-symbols-outlined text-[20px]">arrow_upward</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -957,8 +962,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="splash.js?v=1772650147"></script>
-    <script src="app.js?v=1772770002"></script>
+    <script src="splash.js?v=1772770003"></script>
+    <script src="app.js?v=1772770009"></script>
 </body>
 
 </html>
