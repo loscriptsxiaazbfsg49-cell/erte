@@ -33,6 +33,13 @@ const state = {
     conversationStarted: false,
     titleAutoSet: false,
     pendingFiles: [],   // files attached but not yet sent
+    abortController: null, // to cancel generation
+};
+
+// Utility to truncate titles to 13 chars + "..."
+const truncateTitle = (title, limit = 13) => {
+    if (!title) return '';
+    return title.length > limit ? title.substring(0, limit) + '...' : title;
 };
 
 // ===== DOMAIN MAP FOR FAVICONS (slug -> website domain for favicon fetching) =====
@@ -294,7 +301,7 @@ async function autoNameConversation(userMessage, assistantMessage) {
 }
 
 // ===== SEND CHAT MESSAGE =====
-async function sendChatMessage(userMessage, onChunk) {
+async function sendChatMessage(userMessage, onChunk, signal) {
     if (!state.selectedModel) { alert('Veuillez sélectionner un modèle IA'); return null; }
 
     state.chatMessages.push({ role: 'user', content: userMessage });
@@ -314,6 +321,7 @@ async function sendChatMessage(userMessage, onChunk) {
             method: 'POST',
             headers: SB_HEADERS,
             body: JSON.stringify({ model: state.selectedModel, messages, stream: true }),
+            signal // Pass the AbortSignal
         });
 
         if (!resp.ok) {
@@ -471,6 +479,14 @@ async function openConversation(id) {
     const suggestionsGrid = $('suggestionsGrid');
     const contentArea = $('contentArea');
 
+    // Reset any inline styles that might have pushed the input container off-screen
+    const inputContainer = $('inputContainer');
+    if (inputContainer) {
+        inputContainer.style.top = '';
+        inputContainer.style.bottom = '';
+        inputContainer.style.transform = '';
+    }
+
     chatArea.innerHTML = '';
     chatArea.classList.remove('hidden');
     chatArea.classList.add('flex', 'flex-col');
@@ -591,15 +607,16 @@ function startNewChat() {
 function updateConvTitleHeader(title) {
     const area = $('currentConvTitleArea');
     const el = $('currentConvTitle');
+    const displayTitle = truncateTitle(title || 'Nouveau chat');
     if (area && el) {
-        el.textContent = title;
+        el.textContent = displayTitle;
         area.classList.remove('hidden');
         area.classList.add('flex');
     }
     const mobileTitle = $('mobileConvTitle');
     const mobileActions = $('mobileConvActions');
     if (mobileTitle) {
-        mobileTitle.textContent = title || 'Omegai';
+        mobileTitle.textContent = displayTitle || 'Omegai';
         if (title && title !== 'Omegai' && title !== 'Nouveau chat') {
             mobileActions?.classList.remove('hidden');
             mobileActions?.classList.add('flex');
@@ -754,21 +771,80 @@ function addMessageBubble(role, content, filesOrScroll = true) {
 
     const bubble = document.createElement('div');
     bubble.className = role === 'user'
-        ? 'max-w-[80%] bg-background-subtle text-text-main rounded-3xl px-4 py-2.5 text-sm leading-relaxed'
-        : 'max-w-full text-text-main py-2 text-sm leading-relaxed w-full';
+        ? 'max-w-[80%] bg-background-subtle text-text-main rounded-3xl px-4 py-2.5 text-sm leading-relaxed select-none'
+        : 'max-w-full text-text-main py-2 text-sm leading-relaxed w-full select-text';
     if (content) bubble.innerHTML = renderMarkdown(content);
 
     bubbleWrapper.appendChild(bubble);
     wrapper.appendChild(bubbleWrapper);
 
+    if (role === 'user') {
+        let pressTimer;
+        const triggerUserMenu = (x, y) => {
+            const userCtx = $('userMessageContextMenu');
+            if (!userCtx) return;
+            // Store content for actions
+            window.__lastUserMessageContent = content;
+
+            userCtx.classList.remove('hidden');
+            const menuWidth = 200;
+            if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+            userCtx.style.left = `${x}px`;
+            userCtx.style.top = `${y}px`;
+            window.__userMenuOpenedAt = Date.now();
+        };
+
+        bubble.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            triggerUserMenu(e.clientX, e.clientY);
+        });
+
+        bubble.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+                triggerUserMenu(e.touches[0].clientX, e.touches[0].clientY);
+            }, 600);
+        }, { passive: true });
+
+        bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+        bubble.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    }
+
     // Ajout des boutons d'actions sous les réponses de l'IA
     if (role === 'assistant') {
+        const aiActionsContainer = document.createElement('div');
+        aiActionsContainer.className = 'flex flex-col gap-2 mt-2 ml-1';
+
+        // 1. Ligne des icônes d'outils
+        const iconRow = document.createElement('div');
+        iconRow.className = 'flex items-center gap-4 text-text-muted';
+
+        const createIconBtn = (iconName, title) => {
+            const btn = document.createElement('button');
+            btn.className = 'hover:text-text-main transition-colors flex items-center justify-center';
+            btn.title = title;
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${iconName}</span>`;
+            return btn;
+        };
+
+        const btnCopy = createIconBtn('content_copy', 'Copier');
+        btnCopy.onclick = () => { navigator.clipboard.writeText(content); };
+
+        const btnLike = createIconBtn('thumb_up', 'J\'aime');
+        const btnDislike = createIconBtn('thumb_down', 'Je n\'aime pas');
+        const btnAudio = createIconBtn('volume_up', 'Écouter');
+        const btnShare = createIconBtn('share', 'Partager');
+        const btnMore = createIconBtn('more_vert', 'Plus d\'options');
+
+        iconRow.append(btnCopy, btnLike, btnDislike, btnAudio, btnShare, btnMore);
+        aiActionsContainer.appendChild(iconRow);
+
+        // 2. Ligne des boutons textuels
         const actionRow = document.createElement('div');
-        actionRow.className = 'flex gap-2 items-center mt-1 ml-1';
+        actionRow.className = 'flex gap-4 items-center mt-1 ml-1';
 
         const btnResume = document.createElement('button');
-        btnResume.className = 'text-[11px] px-3 py-1.5 rounded-full bg-background-light border border-border-subtle hover:bg-background-subtle text-text-muted transition flex items-center gap-1 cursor-pointer';
-        btnResume.innerHTML = '<span class="material-symbols-outlined text-[12px]">summarize</span> Résumer';
+        btnResume.className = 'text-[12px] hover:text-text-main transition-colors flex items-center gap-1 cursor-pointer text-text-muted';
+        btnResume.innerHTML = '<span class="material-symbols-outlined text-[14px]">summarize</span> Résumer';
         btnResume.onclick = () => {
             const ta = $('chatTextarea');
             ta.value = "Fais un résumé clair et concis de ta dernière réponse.";
@@ -777,8 +853,8 @@ function addMessageBubble(role, content, filesOrScroll = true) {
         };
 
         const btnReform = document.createElement('button');
-        btnReform.className = 'text-[11px] px-3 py-1.5 rounded-full bg-background-light border border-border-subtle hover:bg-background-subtle text-text-muted transition flex items-center gap-1 cursor-pointer';
-        btnReform.innerHTML = '<span class="material-symbols-outlined text-[12px]">edit_note</span> Humaniser';
+        btnReform.className = 'text-[12px] hover:text-text-main transition-colors flex items-center gap-1 cursor-pointer text-text-muted';
+        btnReform.innerHTML = '<span class="material-symbols-outlined text-[14px]">edit_note</span> Humaniser';
         btnReform.title = "Reformuler pour masquer le fait que c'est une IA";
         btnReform.onclick = () => {
             const ta = $('chatTextarea');
@@ -789,7 +865,9 @@ function addMessageBubble(role, content, filesOrScroll = true) {
 
         actionRow.appendChild(btnResume);
         actionRow.appendChild(btnReform);
-        wrapper.appendChild(actionRow);
+        aiActionsContainer.appendChild(actionRow);
+
+        wrapper.appendChild(aiActionsContainer);
     }
 
     chatArea.appendChild(wrapper);
@@ -915,13 +993,26 @@ function removeTypingIndicator() { const el = $('typingIndicator'); if (el) el.r
 async function handleSend() {
     const textarea = $('chatTextarea');
     const sendBtn = $('sendBtn');
+    if (!textarea || !sendBtn) return;
+
+    // Stop generation if already sending
+    if (state.isSending) {
+        if (state.abortController) {
+            state.abortController.abort();
+        }
+        return;
+    }
+
     const msg = textarea.value.trim();
     const hasFiles = state.pendingFiles && state.pendingFiles.length > 0;
-    if (!msg && !hasFiles || state.isSending) return;
+    if (!msg && !hasFiles) return;
     if (!state.selectedModel) { alert("Veuillez d'abord sélectionner un modèle IA dans la barre à droite"); return; }
 
     state.isSending = true;
-    sendBtn.disabled = true;
+
+    // Transform button to "Stop" (Square)
+    sendBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">stop</span>';
+    sendBtn.disabled = false; // Important: button must be clickable to stop!
 
     if (!state.conversationStarted) {
         state.conversationStarted = true;
@@ -929,32 +1020,29 @@ async function handleSend() {
         const titleArea = $('titleArea');
         const suggestionsGrid = $('suggestionsGrid');
         const chatArea = $('chatMessagesArea');
-        const contentArea = $('contentArea');
-        titleArea.style.display = 'none';
-        suggestionsGrid.style.display = 'none';
-        chatArea.classList.remove('hidden');
-        chatArea.classList.add('flex', 'flex-col');
-        contentArea.classList.remove('justify-center');
-        contentArea.classList.add('justify-end');
-
-        // Hide layout toggle buttons when conversation starts
-        updateLayoutToggleButtons();
-
-        // Show the model badge above the input bar (especially important for pyramid mode)
-        if (state.selectedModel) {
-            const model = state.allModels.find(m => m.id === state.selectedModel);
-            const slug = getSlug(state.selectedModel);
-            const shortName = state.selectedModel.split('/').slice(1).join('/');
-            showBadge(model?.name || shortName, slug);
+        if (titleArea) titleArea.style.display = 'none';
+        if (suggestionsGrid) suggestionsGrid.style.display = 'none';
+        if (chatArea) {
+            chatArea.classList.remove('hidden');
+            chatArea.classList.add('flex', 'flex-col');
         }
+        const contentArea = $('contentArea');
+        if (contentArea) {
+            contentArea.classList.remove('justify-center');
+            contentArea.classList.add('justify-end');
+        }
+        const modelBar = $('modelSelectorBar');
+        if (modelBar) modelBar.classList.add('hidden');
+        const aiSidebar = $('aiProviderSidebar');
+        if (aiSidebar) { aiSidebar.classList.add('hidden'); aiSidebar.classList.remove('sidebar-show'); }
+        updateLayoutToggleButtons();
     }
 
     if (!state.currentConversationId) {
         const convId = await createConversation('Nouveau chat');
-        // #35: If conv creation failed, abort sending
         if (!convId) {
             state.isSending = false;
-            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">arrow_upward</span>';
             return;
         }
     }
@@ -962,11 +1050,10 @@ async function handleSend() {
     addMessageBubble('user', msg, state.pendingFiles || []);
     textarea.value = '';
     textarea.style.height = '44px';
-    // Clear pending files
     state.pendingFiles = [];
     const filesPreview = document.getElementById('inputFilesPreview');
     if (filesPreview) filesPreview.remove();
-    // #23: Only reset positioning if in pyramid mode
+
     const isPyr = state.providerLayout === 'pyramid';
     if (isPyr) {
         $('inputContainer').style.top = '';
@@ -975,27 +1062,36 @@ async function handleSend() {
     }
     showTypingIndicator();
 
-    // Create placeholder for assistant response
     let assistantBubble = null;
-    const reply = await sendChatMessage(msg, (fullText) => {
-        removeTypingIndicator();
-        if (!assistantBubble) {
-            assistantBubble = addMessageBubble('assistant', fullText);
+    state.abortController = new AbortController();
+
+    try {
+        const reply = await sendChatMessage(msg, (fullText) => {
+            removeTypingIndicator();
+            if (!assistantBubble) {
+                assistantBubble = addMessageBubble('assistant', fullText);
+            } else {
+                assistantBubble.innerHTML = renderMarkdown(fullText);
+                const chatArea = $('chatMessagesArea');
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+        }, state.abortController.signal);
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            console.log('[Chat] Generation stopped by user');
         } else {
-            assistantBubble.innerHTML = renderMarkdown(fullText);
-            const chatArea = $('chatMessagesArea');
-            chatArea.scrollTop = chatArea.scrollHeight;
+            console.error('[Chat] HandleSend error:', e);
+            addMessageBubble('assistant', `Désolé, une erreur est survenue : ${e.message}`);
         }
-    });
-
-    removeTypingIndicator();
-    if (!assistantBubble && reply) {
-        addMessageBubble('assistant', reply);
+    } finally {
+        removeTypingIndicator();
+        state.isSending = false;
+        state.abortController = null;
+        sendBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">arrow_upward</span>';
+        if (window.innerWidth >= 768) {
+            textarea.focus();
+        }
     }
-
-    state.isSending = false;
-    sendBtn.disabled = false;
-    textarea.focus();
 }
 
 // ===== PROVIDER TOOLTIP (fixed portal — avoids all overflow clipping) =====
@@ -1113,71 +1209,135 @@ function hideProviderTooltip() {
 
 // ===== SMART MODEL RANKING =====
 // Score providers based on what the user is typing.
-// Higher score = placed first in the providers list.
+// Config is loaded from Supabase (provider_configs + app_settings tables).
 
 let _rankingDebounce = null;
-let _defaultProviderOrder = null; // saved on first ranking call
+let _defaultProviderOrder = null;
+let _dbProviderSignals = null;  // loaded from DB
+let _dbSignalPatterns = null;   // loaded from DB
+let _dbRankingSettings = null;  // loaded from DB
+
+// Load ranking config from Supabase on startup
+async function loadRankingConfig() {
+    try {
+        const [provRes, patternsRes, settingsRes] = await Promise.all([
+            sb.from('provider_configs').select('*'),
+            sb.from('app_settings').select('*').eq('key', 'signal_patterns').maybeSingle(),
+            sb.from('app_settings').select('*').eq('key', 'ranking_settings').maybeSingle(),
+        ]);
+
+        // Provider signals from DB
+        if (provRes.data && provRes.data.length > 0) {
+            _dbProviderSignals = {};
+            provRes.data.forEach(p => {
+                _dbProviderSignals[p.slug] = {
+                    vision: p.vision || 0, code: p.code || 0, math: p.math || 0,
+                    creative: p.creative || 0, chat: p.chat || 0, search: p.search || 0,
+                    shopping: p.shopping || 0, audio: p.audio || 0, video: p.video || 0,
+                    longCtx: p.long_ctx || 0, reasoning: p.reasoning || 0, fast: p.fast || 0,
+                };
+            });
+            console.log(`[Omegai] Loaded ${provRes.data.length} provider configs from DB`);
+        }
+
+        // Signal regex patterns from DB
+        if (patternsRes.data && patternsRes.data.value) {
+            _dbSignalPatterns = patternsRes.data.value;
+            console.log('[Omegai] Loaded signal patterns from DB');
+        }
+
+        // Ranking settings from DB
+        if (settingsRes.data && settingsRes.data.value) {
+            _dbRankingSettings = settingsRes.data.value;
+            console.log('[Omegai] Loaded ranking settings from DB');
+        }
+    } catch (e) {
+        console.warn('[Omegai] Could not load ranking config from DB, using defaults:', e.message);
+    }
+}
+
+function getRankingSetting(key, defaultVal) {
+    if (_dbRankingSettings && _dbRankingSettings[key] !== undefined) return _dbRankingSettings[key];
+    return defaultVal;
+}
 
 function scheduleModelRanking(text) {
     clearTimeout(_rankingDebounce);
-    if (!text || text.trim().length < 3) {
-        // Restore default order if text is cleared
+    const minLen = getRankingSetting('minLength', 3);
+    if (!text || text.trim().length < minLen) {
         if (_defaultProviderOrder) restoreDefaultProviderOrder();
         return;
     }
-    _rankingDebounce = setTimeout(() => rankProvidersByPrompt(text), 300);
+    const debounce = getRankingSetting('debounce', 300);
+    _rankingDebounce = setTimeout(() => rankProvidersByPrompt(text), debounce);
 }
+
+// Default signal patterns (fallback if DB has none)
+const _defaultSignalPatterns = {
+    vision: /image|photo|voir|regarde|analyse (la|cette|l'|mon)|screenshot|capture|describe|picture|diagram|visual|logo|scan|ocr|lire cette image|lis cette image|qu.est.ce que|what.s in/i,
+    code: /code|programme|fonction|debug|bug|erreur|javascript|python|typescript|css|html|bash|sql|algoritme|algorithme|script|develop|coder|fix|refactor|class|function|variable|import|library|npm|git|terminal/i,
+    math: /calcul|math|équation|equation|résoudre|résolution|solve|intégral|dérivé|statistique|probabilité|formule|algèbre|géométrie|physique|chimie|science|scientific/i,
+    creative: /écris|rédige|roman|histoire|poème|créatif|créer|imagine|invente|fiction|scénario|scenarist|screenplay|chanson|lyric|humour|blague|joke|slogan|publicité|pub|article|blog/i,
+    chat: /comment|pourquoi|qu.est.ce|what|help|aide|explain|explique|dis.moi|tell|discuss|talk|convers|opinion|pense|think|avis|conseil|conseille|recommande/i,
+    search: /recherche|search|trouve|find|actualité|news|récent|latest|2024|2025|internet|web|source|article|wiki|tendance|trend/i,
+    shopping: /achète|achat|prix|tarif|shop|produit|amazon|comparaison|meilleur|recommend|buy|store|commande|livraison/i,
+    audio: /audio|musique|music|son|sound|voix|voice|transcri|speech|parle|chante|sing|podcast|mp3|wav/i,
+    video: /vidéo|video|film|youtube|montage|edit|clip|animation|render/i,
+    longCtx: /long|beaucoup|fichier entier|the whole|entire|complete|many pages|analyse tout|full text|résume ce livre|summarize this book/i,
+    reasoning: /raisonne|pense|réfléchis|analyse|pros.cons|pour et contre|decision|stratégi|complex|difficult|challenging|step.by.step|explain why|pourquoi exactement/i,
+    fast: /vite|rapide|quick|fast|simple|court|brief|résume en|summarize in|one.line|une phrase/i,
+};
+
+// Default provider weights (fallback if DB has none)
+const _defaultProviderSignals = {
+    'openai': { code: 3, math: 3, vision: 3, reasoning: 3, chat: 2, longCtx: 2 },
+    'anthropic': { creative: 4, reasoning: 4, longCtx: 4, code: 3, chat: 3, vision: 2 },
+    'google': { search: 4, vision: 4, longCtx: 4, math: 3, code: 3, chat: 2 },
+    'meta-llama': { chat: 3, code: 3, fast: 3, creative: 2 },
+    'mistralai': { code: 4, fast: 3, math: 3 },
+    'perplexity': { search: 5, chat: 3 },
+    'deepseek': { code: 5, math: 5, reasoning: 4 },
+    'qwen': { code: 4, math: 4, vision: 3, longCtx: 3 },
+    'x-ai': { chat: 3, reasoning: 3 },
+    'cohere': { search: 3, longCtx: 4, code: 2 },
+    'nvidia': { code: 3, math: 3, vision: 2 },
+    'microsoft': { code: 4, reasoning: 3 },
+    'black-forest-labs': { vision: 0, code: 0 },
+    'openrouter': { chat: 2, code: 2 },
+    'moonshotai': { longCtx: 5, code: 2 },
+    'bytedance': { video: 3, audio: 2 },
+    'tencent': { code: 2, video: 2 },
+    'minimax': { audio: 3, video: 3, creative: 2 },
+};
 
 function rankProvidersByPrompt(text) {
     if (!state.allModels || state.allModels.length === 0) return;
 
     const t = text.toLowerCase();
 
-    // ---- Keyword signals ----
-    const signals = {
-        vision: /image|photo|voir|regarde|analyse (la|cette|l'|mon)|screenshot|capture|describe|picture|diagram|visual|logo|scan|ocr|lire cette image|lis cette image|qu.est.ce que|what.s in/i.test(t),
-        code: /code|programme|fonction|debug|bug|erreur|javascript|python|typescript|css|html|bash|sql|algoritme|algorithme|script|develop|coder|fix|refactor|class|function|variable|import|library|npm|git|terminal/i.test(t),
-        math: /calcul|math|équation|equation|résoudre|résolution|solve|intégral|dérivé|statistique|probabilité|formule|algèbre|géométrie|physique|chimie|science|scientific/i.test(t),
-        creative: /écris|rédige|roman|histoire|poème|créatif|créer|imagine|invente|fiction|scénario|scenarist|screenplay|chanson|lyric|humour|blague|joke|slogan|publicité|pub|article|blog/i.test(t),
-        chat: /comment|pourquoi|qu.est.ce|what|help|aide|explain|explique|dis.moi|tell|discuss|talk|convers|opinion|pense|think|avis|conseil|conseille|recommande/i.test(t),
-        search: /recherche|search|trouve|find|actualité|news|récent|latest|2024|2025|internet|web|source|article|wiki|tendance|trend/i.test(t),
-        shopping: /achète|achat|prix|tarif|shop|produit|amazon|comparaison|meilleur|recommend|buy|store|commande|livraison/i.test(t),
-        audio: /audio|musique|music|son|sound|voix|voice|transcri|speech|parle|chante|sing|podcast|mp3|wav/i.test(t),
-        video: /vidéo|video|film|youtube|montage|edit|clip|animation|render/i.test(t),
-        longCtx: /long|beaucoup|fichier entier|the whole|entire|complete|many pages|analyse tout|full text|résume ce livre|summarize this book/i.test(t),
-        reasoning: /raisonne|pense|réfléchis|analyse|pros.cons|pour et contre|decision|stratégi|complex|difficult|challenging|step.by.step|explain why|pourquoi exactement/i.test(t),
-        fast: /vite|rapide|quick|fast|simple|court|brief|résume en|summarize in|one.line|une phrase/i.test(t),
-    };
+    // ---- Build signal regex from DB if available, else use defaults ----
+    const signals = {};
+    Object.keys(_defaultSignalPatterns).forEach(sig => {
+        const dbKey = sig === 'longCtx' ? 'long_ctx' : sig;
+        if (_dbSignalPatterns && _dbSignalPatterns[dbKey]) {
+            try {
+                signals[sig] = new RegExp(_dbSignalPatterns[dbKey], 'i').test(t);
+            } catch (e) {
+                signals[sig] = _defaultSignalPatterns[sig].test(t);
+            }
+        } else {
+            signals[sig] = _defaultSignalPatterns[sig].test(t);
+        }
+    });
 
     // Which files are pending?
     const hasPendingImage = (state.pendingFiles || []).some(f => f.type.startsWith('image/'));
-    const hasPendingFile = (state.pendingFiles || []).some(f => !f.type.startsWith('image/') && !f.type.startsWith('video/'));
-    if (hasPendingImage) signals.vision = true;
+    const visionBonus = getRankingSetting('visionBonus', true);
+    const visionBonusPoints = getRankingSetting('visionBonusPoints', 4);
+    if (hasPendingImage && visionBonus) signals.vision = true;
 
-    // ---- Provider capability heuristics ----
-    // We score each provider by summing scores for each signal that matches
-    // their known strengths (based on slug / model metadata).
-    const PROVIDER_SIGNALS = {
-        // slug: { signal: weight }
-        'openai': { code: 3, math: 3, vision: 3, reasoning: 3, chat: 2, longCtx: 2 },
-        'anthropic': { creative: 4, reasoning: 4, longCtx: 4, code: 3, chat: 3, vision: 2 },
-        'google': { search: 4, vision: 4, longCtx: 4, math: 3, code: 3, chat: 2 },
-        'meta-llama': { chat: 3, code: 3, fast: 3, creative: 2 },
-        'mistralai': { code: 4, fast: 3, math: 3 },
-        'perplexity': { search: 5, chat: 3 },
-        'deepseek': { code: 5, math: 5, reasoning: 4 },
-        'qwen': { code: 4, math: 4, vision: 3, longCtx: 3 },
-        'x-ai': { chat: 3, reasoning: 3 },
-        'cohere': { search: 3, longCtx: 4, code: 2 },
-        'nvidia': { code: 3, math: 3, vision: 2 },
-        'microsoft': { code: 4, reasoning: 3 },
-        'black-forest-labs': { vision: 0, code: 0 }, // image gen only
-        'openrouter': { chat: 2, code: 2 },
-        'moonshotai': { longCtx: 5, code: 2 },
-        'bytedance': { video: 3, audio: 2 },
-        'tencent': { code: 2, video: 2 },
-        'minimax': { audio: 3, video: 3, creative: 2 },
-    };
+    // ---- Provider capability scores (from DB or defaults) ----
+    const PROVIDER_SIGNALS = _dbProviderSignals || _defaultProviderSignals;
 
     // Build score per provider
     const scores = {};
@@ -1188,13 +1348,13 @@ function rankProvidersByPrompt(text) {
             if (active && weights[sig]) score += weights[sig];
         });
         // Bonus for multi-modal when files attached
-        if (hasPendingImage) {
+        if (hasPendingImage && visionBonus) {
             const models = state.providerMap[slug].models;
             const hasVisionModel = models.some(m => {
                 const inputs = m.architecture?.input_modalities || [];
                 return inputs.includes('image') || (m.architecture?.modality || '').includes('image');
             });
-            if (hasVisionModel) score += 4;
+            if (hasVisionModel) score += visionBonusPoints;
         }
         scores[slug] = score;
     });
@@ -1208,33 +1368,36 @@ function rankProvidersByPrompt(text) {
     const sorted = Object.keys(state.providerMap).sort((a, b) => {
         const diff = (scores[b] || 0) - (scores[a] || 0);
         if (diff !== 0) return diff;
-        // tie-break: original order
         return _defaultProviderOrder.indexOf(a) - _defaultProviderOrder.indexOf(b);
     });
 
     // Rebuild providerMap in new order
     const reordered = {};
-    // Always keep __none__ and __search__ special items first — they are not in providerMap
     sorted.forEach(k => { reordered[k] = state.providerMap[k]; });
     state.providerMap = reordered;
 
     // Re-render the providers list
     if (window._renderProviders) window._renderProviders();
 
-    // Show subtle "AI ranking" indicator
-    showRankingIndicator(signals);
+    // Show ranking indicator (desktop only, if enabled)
+    const showBadge = getRankingSetting('showBadge', true);
+    if (showBadge) {
+        showRankingIndicator(signals);
+    } else {
+        hideRankingIndicator();
+    }
 }
 
 function restoreDefaultProviderOrder() {
     if (!_defaultProviderOrder || !state.providerMap) return;
     const restored = {};
     _defaultProviderOrder.forEach(k => { if (state.providerMap[k]) restored[k] = state.providerMap[k]; });
-    // Add any keys that weren't in the original order (newly loaded)
     Object.keys(state.providerMap).forEach(k => { if (!restored[k]) restored[k] = state.providerMap[k]; });
     state.providerMap = restored;
     if (window._renderProviders) window._renderProviders();
     hideRankingIndicator();
 }
+
 
 let _rankingIndicatorEl = null;
 function showRankingIndicator(signals) {
@@ -1682,7 +1845,8 @@ function initAIProviders() {
             inner.style.height = '100%';
             const content = $('modelSelectorContent');
             if (content) {
-                content.style.height = '100%';
+                content.style.height = 'auto'; // Fix for the black rectangle
+                content.style.maxHeight = '100%';
                 content.style.borderRadius = '20px 20px 0 0';
                 content.style.marginBottom = '0';
             }
@@ -2184,9 +2348,9 @@ function initMobileOptimizations() {
                 if (!inputContainer) return;
 
                 const offset = window.innerHeight - viewport.height;
-                // If keyboard is likely open (offset > threshold)
-                // We use transform to skip Layout/Paint cycles and be smooth
-                if (offset > 60) {
+                const ta = document.getElementById('chatTextarea');
+                // Only push the bar up if the textarea actually has focus
+                if (offset > 60 && document.activeElement === ta) {
                     inputContainer.style.bottom = `${offset}px`;
                 } else {
                     inputContainer.style.bottom = '0px';
@@ -2199,9 +2363,11 @@ function initMobileOptimizations() {
         // Swipe gesture to open/close sidebar
         let touchStartX = 0;
         let touchEndX = 0;
+        let touchStartTarget = null;
 
         document.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartTarget = e.target;
         }, false);
 
         document.addEventListener('touchend', e => {
@@ -2214,9 +2380,20 @@ function initMobileOptimizations() {
             if (!sidebar) return;
             const diffX = touchEndX - touchStartX;
 
+            // Ignore swipe to open menu if started in provider list (top bar on mobile)
+            if (touchStartTarget && touchStartTarget.closest('#aiProviderSidebar')) {
+                return;
+            }
+
             // Swiping right (moving finger to the right) should show the menu if starting from left
             if (diffX > 60 && touchStartX < window.innerWidth * 0.25) {
-                if (sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    toggleSidebar();
+                    // Close keyboard automatically
+                    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                        document.activeElement.blur();
+                    }
+                }
             }
             // Swiping left (moving finger to the left) to close it
             else if (diffX < -60) {
@@ -2239,11 +2416,70 @@ document.addEventListener('DOMContentLoaded', () => {
     initPageContextMenu();
     initSidebarContextMenu();
     initAIResponseContextMenu();
+    initUserMessageContextMenu();
     initToolsMenu();
     initWebSearch();
     loadConversations();
+    loadRankingConfig();
     initRealtime();
+    initShakeDetector();
 });
+
+function initShakeDetector() {
+    let shakeCount = 0;
+    let lastUpdate = 0;
+    let x = 0, y = 0, z = 0, last_x = 0, last_y = 0, last_z = 0;
+    // Lower threshold so it works on devices with less sensitive accelerometers
+    const SHAKE_THRESHOLD = 300;
+    let isShaking = false;
+    let shakeTimeout = null;
+
+    if (window.DeviceMotionEvent) {
+        window.addEventListener('devicemotion', (e) => {
+            const current = e.accelerationIncludingGravity;
+            if (!current || current.x === null) return;
+            const curTime = Date.now();
+            if ((curTime - lastUpdate) > 100) {
+                const diffTime = (curTime - lastUpdate);
+                lastUpdate = curTime;
+
+                x = current.x;
+                y = current.y;
+                z = current.z;
+
+                // Absolute difference per axis prevents positive/negative values from cancelling out
+                const speed = (Math.abs(x - last_x) + Math.abs(y - last_y) + Math.abs(z - last_z)) / diffTime * 10000;
+
+                if (speed > SHAKE_THRESHOLD) {
+                    if (!isShaking) {
+                        isShaking = true;
+                        shakeCount = 0;
+                    }
+                    shakeCount++;
+
+                    if (shakeCount === 3) {
+                        showGlobalNotification("Svp, secouez le téléphone encore quelques secondes pour débloquer les fonctionnalités cachées...", 'info', 4000);
+                    }
+                    if (shakeCount >= 15) { // reduced required shakes for easier unlock
+                        // 25 iterations (approx 5 sec)
+                        isShaking = false;
+                        shakeCount = 0;
+                        showGlobalNotification("🦄 Fonctionnalités expérimentales débloquées !", 'success', 5000);
+                        localStorage.setItem('woltUnlocked', 'true');
+                        document.body.classList.add('wolt-unlocked');
+                    }
+
+                    clearTimeout(shakeTimeout);
+                    shakeTimeout = setTimeout(() => { isShaking = false; shakeCount = 0; }, 2000);
+                }
+
+                last_x = x;
+                last_y = y;
+                last_z = z;
+            }
+        });
+    }
+}
 
 function toggleSidebar() {
     const sidebar = $('sidebar'), icon = $('toggleIcon'), btn = $('sidebarToggle'), overlay = $('sidebarOverlay');
@@ -2801,6 +3037,73 @@ function initConversationUI() {
 }
 
 // ===== AI RESPONSE CONTEXT MENU =====
+function initUserMessageContextMenu() {
+    const menu = $('userMessageContextMenu');
+    const copyBtn = $('userCtxCopy');
+    const selectBtn = $('userCtxSelect');
+    const editBtn = $('userCtxEdit');
+    const shareBtn = $('userCtxShare');
+    if (!menu) return;
+
+    const hide = () => {
+        menu.classList.add('hidden');
+    };
+
+    document.addEventListener('mousedown', (e) => {
+        // Prevent instant close if opened < 300ms ago (fixes mobile flicker from touchend -> click)
+        if (window.__userMenuOpenedAt && Date.now() - window.__userMenuOpenedAt < 300) return;
+        if (!menu.contains(e.target)) hide();
+    });
+
+    document.addEventListener('scroll', hide, { passive: true });
+    window.addEventListener('resize', hide, { passive: true });
+
+    copyBtn?.addEventListener('click', () => {
+        if (window.__lastUserMessageContent) {
+            navigator.clipboard.writeText(window.__lastUserMessageContent);
+        }
+        hide();
+    });
+
+    selectBtn?.addEventListener('click', () => {
+        hide();
+        const ta = $('chatTextarea');
+        if (ta && window.__lastUserMessageContent) {
+            ta.value = window.__lastUserMessageContent;
+            ta.focus();
+            ta.select();
+        }
+    });
+
+    editBtn?.addEventListener('click', () => {
+        hide();
+        const ta = $('chatTextarea');
+        if (ta && window.__lastUserMessageContent) {
+            ta.value = window.__lastUserMessageContent;
+            ta.focus();
+        }
+    });
+
+    shareBtn?.addEventListener('click', async () => {
+        hide();
+        if (navigator.share && window.__lastUserMessageContent) {
+            try {
+                await navigator.share({
+                    title: 'Message Omegai',
+                    text: window.__lastUserMessageContent
+                });
+            } catch (err) {
+                console.error("Partage annulé ou échoué", err);
+            }
+        } else {
+            if (window.__lastUserMessageContent) {
+                navigator.clipboard.writeText(window.__lastUserMessageContent);
+                alert("Texte copié (partage natif non supporté par ce navigateur)");
+            }
+        }
+    });
+}
+
 function initAIResponseContextMenu() {
     const menu = $('aiResponseContextMenu');
     const subMenu = $('aiCtxSubMenu');

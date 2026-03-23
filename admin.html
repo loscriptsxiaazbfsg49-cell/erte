@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omegai — Admin Dashboard</title>
+    <link id="favicon" rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "rgb(var(--color-primary) / <alpha-value>)",
+                        "primary-content": "rgb(var(--color-primary-content) / <alpha-value>)",
+                        "surface": "rgb(var(--color-surface) / <alpha-value>)",
+                        "surface-alt": "rgb(var(--color-surface-alt) / <alpha-value>)",
+                        "border": "rgb(var(--color-border) / <alpha-value>)",
+                        "text": "rgb(var(--color-text) / <alpha-value>)",
+                        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+                    },
+                    fontFamily: { "body": ["Inter", "sans-serif"] },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --color-primary: 99 102 241;
+            --color-primary-content: 255 255 255;
+            --color-surface: 15 15 20;
+            --color-surface-alt: 24 24 32;
+            --color-border: 45 45 60;
+            --color-text: 240 240 245;
+            --color-text-muted: 140 140 160;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: rgb(var(--color-surface));
+            color: rgb(var(--color-text));
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Cards */
+        .card {
+            background: rgb(var(--color-surface-alt));
+            border: 1px solid rgb(var(--color-border));
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        /* Signal weight cell */
+        .weight-input {
+            width: 56px;
+            height: 36px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            background: #1a1a24 !important;
+            /* Dark background */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff !important;
+            /* White text */
+            transition: all 0.2s;
+            appearance: textfield;
+            /* Remove arrows if possible */
+        }
+
+        .weight-input::-webkit-outer-spin-button,
+        .weight-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .weight-input:focus {
+            outline: none;
+            border-color: rgb(var(--color-primary));
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+            background: #242432 !important;
+        }
+
+        .weight-input.changed {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        /* Score pill */
+        .score-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Stat card */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02));
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            padding: 20px 24px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgb(var(--color-text-muted));
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: rgb(var(--color-text));
+        }
+
+        .tab-btn.active {
+            background: rgba(99, 102, 241, 0.12);
+            color: rgb(99, 102, 241);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgb(22, 163, 74);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            background: rgb(220, 38, 38);
+        }
+
+        /* Result row animation */
+        .result-row {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .toggle input {
+            display: none;
+        }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s;
+        }
+
+        .toggle input:checked+.toggle-track {
+            background: rgb(99, 102, 241);
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle input:checked~.toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .card {
+                padding: 16px;
+            }
+
+            .weight-input {
+                width: 44px;
+                height: 32px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl border-b border-border" style="background: rgba(15,15,20,0.85);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2 text-text-muted hover:text-text transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                </a>
+                <img src="logo.png" alt="Omegai" class="h-7 w-auto invert" />
+                <div>
+                    <h1 class="text-lg font-bold text-text">Admin Dashboard</h1>
+                    <p class="text-xs text-text-muted">Configuration du classement IA & paramètres</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="connectionStatus" class="flex items-center gap-1.5 text-xs text-emerald-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Connecté
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Stats row -->
+        <section id="statsSection" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="stat-card">
+                <p class="text-xs text-text-muted font-medium uppercase tracking-wider mb-1">Providers Configurés</p>
+                <p id="statProviders" class="text-2xl font-bold text-primary">—</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-xs text-text-muted font-medium uppercase tracking-wider mb-1">Conversations</p>
+                <p id="statConversations" class="text-2xl font-bold text-primary">—</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-xs text-text-muted font-medium uppercase tracking-wider mb-1">Messages</p>
+                <p id="statMessages" class="text-2xl font-bold text-primary">—</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-xs text-text-muted font-medium uppercase tracking-wider mb-1">Signaux Actifs</p>
+                <p id="statSignals" class="text-2xl font-bold text-primary">12</p>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <nav class="flex gap-2 overflow-x-auto pb-2">
+            <button class="tab-btn active" data-tab="ranking">
+                <span class="material-symbols-outlined text-[18px] align-middle mr-1">leaderboard</span> Classement IA
+            </button>
+            <button class="tab-btn" data-tab="signals">
+                <span class="material-symbols-outlined text-[18px] align-middle mr-1">regex</span> Signaux & Regex
+            </button>
+            <button class="tab-btn" data-tab="test">
+                <span class="material-symbols-outlined text-[18px] align-middle mr-1">science</span> Simulateur
+            </button>
+            <button class="tab-btn" data-tab="settings">
+                <span class="material-symbols-outlined text-[18px] align-middle mr-1">settings</span> Paramètres
+            </button>
+        </nav>
+
+        <!-- Tab: Ranking Configuration -->
+        <section id="tab-ranking" class="tab-content space-y-5">
+            <div class="card">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h2 class="text-base font-bold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+                            Pondération des Providers par Signal
+                        </h2>
+                        <p class="text-sm text-text-muted mt-1">Définissez un poids de 0 à 5 pour chaque signal. Plus le
+                            poids est élevé, plus le provider sera remonté quand ce signal est détecté dans le prompt.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button id="btnAddProvider"
+                            class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">add</span> Ajouter
+                        </button>
+                        <button id="btnSaveAll"
+                            class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">save</span> Sauvegarder
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto -mx-6 px-6">
+                    <table id="providerTable" class="w-full min-w-[900px]">
+                        <thead>
+                            <tr>
+                                <th
+                                    class="text-left text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-2 w-40 sticky left-0 bg-surface-alt z-10">
+                                    Provider</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Vision / Images">👁 Vision</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Programmation">&lt;/&gt; Code</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Mathématiques">∑ Math</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Créativité">✍ Créatif</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Conversation">💬 Chat</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Recherche web">🔍 Recherche</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Shopping">🛒 Shop</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Audio / Musique">🎵 Audio</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Vidéo">🎞 Vidéo</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Long Contexte">📄 Long</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Raisonnement">🧠 Raison.</th>
+                                <th class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1"
+                                    title="Vitesse">⚡ Rapide</th>
+                                <th
+                                    class="text-center text-xs text-text-muted font-semibold uppercase tracking-wider py-3 px-1 w-20">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="providerTableBody"></tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-text-muted mt-4">💡 Échelle : 0 = pas de compétence, 1 = faible, 3 = moyen, 5 =
+                    expert. Les modifications non sauvegardées sont surlignées en orange.</p>
+            </div>
+        </section>
+
+        <!-- Tab: Signals Configuration -->
+        <section id="tab-signals" class="tab-content hidden space-y-5">
+            <div class="card">
+                <h2 class="text-base font-bold flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-primary text-[22px]">regex</span>
+                    Configuration des Signaux de Détection
+                </h2>
+                <p class="text-sm text-text-muted mb-5">Les signaux détectent les intentions de l'utilisateur via des
+                    expressions régulières. Modifiez les mots-clés pour chaque signal.</p>
+
+                <div id="signalsList" class="space-y-4"></div>
+
+                <div class="flex gap-2 mt-5">
+                    <button id="btnSaveSignals"
+                        class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">save</span> Sauvegarder les signaux
+                    </button>
+                    <button id="btnResetSignals"
+                        class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500/10 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">restart_alt</span> Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Test / Simulator -->
+        <section id="tab-test" class="tab-content hidden space-y-5">
+            <div class="card">
+                <h2 class="text-base font-bold flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-primary text-[22px]">science</span>
+                    Simulateur de Classement
+                </h2>
+                <p class="text-sm text-text-muted mb-4">Tapez un prompt ci-dessous pour voir en temps réel comment les
+                    providers seraient classés.</p>
+
+                <div class="relative mb-4">
+                    <span
+                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">chat</span>
+                    <input id="testPromptInput" type="text"
+                        placeholder="Ex: écris-moi du code Python pour scraper un site web..."
+                        class="w-full pl-12 pr-4 py-3.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text" />
+                </div>
+
+                <!-- Detected signals display -->
+                <div id="testSignalsDisplay" class="flex flex-wrap gap-2 mb-5"></div>
+
+                <!-- Results table -->
+                <div id="testResultsContainer" class="space-y-2">
+                    <p class="text-sm text-text-muted text-center py-8">Tapez un prompt pour voir le classement</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Settings -->
+        <section id="tab-settings" class="tab-content hidden space-y-5">
+            <div class="card">
+                <h2 class="text-base font-bold flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-primary text-[22px]">settings</span>
+                    Paramètres Globaux
+                </h2>
+
+                <div class="space-y-6">
+                    <!-- Ranking behavior -->
+                    <div class="border border-border rounded-xl p-5 space-y-4">
+                        <h3 class="text-sm font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px] text-primary">leaderboard</span>
+                            Comportement du Classement
+                        </h3>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-text-muted font-medium mb-1 block">Délai de détection
+                                    (ms)</label>
+                                <input id="settingDebounce" type="number" min="100" max="2000" step="50" value="300"
+                                    class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                                <p class="text-[11px] text-text-muted mt-1">Temps après la dernière frappe avant de
+                                    recalculer le classement.</p>
+                            </div>
+                            <div>
+                                <label class="text-xs text-text-muted font-medium mb-1 block">Longueur min. du
+                                    prompt</label>
+                                <input id="settingMinLength" type="number" min="1" max="20" value="3"
+                                    class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                                <p class="text-[11px] text-text-muted mt-1">Nombre minimum de caractères pour déclencher
+                                    le classement.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div>
+                                <p class="text-sm font-medium">Bonus Vision automatique</p>
+                                <p class="text-[11px] text-text-muted">+4 points aux providers vision quand une image
+                                    est jointe</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="settingVisionBonus" checked />
+                                <span class="toggle-track"></span>
+                                <span class="toggle-thumb"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div>
+                                <p class="text-sm font-medium">Afficher le badge de classement (desktop)</p>
+                                <p class="text-[11px] text-text-muted">Badge vertical à côté du sidebar IA</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="settingShowBadge" checked />
+                                <span class="toggle-track"></span>
+                                <span class="toggle-thumb"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- API Config -->
+                    <div class="border border-border rounded-xl p-5 space-y-4">
+                        <h3 class="text-sm font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px] text-primary">api</span>
+                            Configuration API
+                        </h3>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-text-muted font-medium mb-1 block">Cache TTL
+                                    (minutes)</label>
+                                <input id="settingCacheTTL" type="number" min="5" max="120" value="30"
+                                    class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-text-muted font-medium mb-1 block">Bonus points vision
+                                    (images jointes)</label>
+                                <input id="settingVisionBonusPoints" type="number" min="0" max="10" value="4"
+                                    class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btnSaveSettings"
+                        class="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">save</span> Sauvegarder les paramètres
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Provider Modal -->
+    <div id="addProviderModal" class="fixed inset-0 z-[999] flex items-center justify-center hidden"
+        style="background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
+        <div class="card w-full max-w-sm mx-4" style="animation: fadeIn 0.3s ease;">
+            <h3 class="text-base font-bold mb-4">Ajouter un Provider</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-text-muted font-medium mb-1 block">Slug (identifiant)</label>
+                    <input id="newProviderSlug" type="text" placeholder="ex: anthropic"
+                        class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                </div>
+                <div>
+                    <label class="text-xs text-text-muted font-medium mb-1 block">Nom d'affichage</label>
+                    <input id="newProviderName" type="text" placeholder="ex: Anthropic"
+                        class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-text" />
+                </div>
+            </div>
+            <div class="flex gap-2 mt-5">
+                <button id="cancelAddProvider"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-alt transition-colors">Annuler</button>
+                <button id="confirmAddProvider"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-content text-sm font-medium hover:bg-primary/90 transition-colors">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete confirmation modal -->
+    <div id="deleteModal" class="fixed inset-0 z-[999] flex items-center justify-center hidden"
+        style="background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);">
+        <div class="card w-full max-w-sm mx-4" style="animation: fadeIn 0.3s ease;">
+            <h3 class="text-base font-bold mb-2">Supprimer ce provider ?</h3>
+            <p id="deleteModalName" class="text-sm text-text-muted mb-5"></p>
+            <div class="flex gap-2">
+                <button id="cancelDelete"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-alt transition-colors">Annuler</button>
+                <button id="confirmDelete"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SUPABASE & STATE =====
+        const SB_URL = 'https://zumhjpzbvnqtcntvwvff.supabase.co';
+        const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bWhqcHpidm5xdGNudHZ3dmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MjczMjEsImV4cCI6MjA4NzIwMzMyMX0.yhDfU7qZLzCql0o5fVH-slsA5vYagFpgsWpU7R4elvo';
+        const sb = supabase.createClient(SB_URL, SB_ANON);
+
+        const SIGNALS = ['vision', 'code', 'math', 'creative', 'chat', 'search', 'shopping', 'audio', 'video', 'long_ctx', 'reasoning', 'fast'];
+        const SIGNAL_LABELS = {
+            vision: '👁 Vision', code: '</> Code', math: '∑ Math', creative: '✍ Créatif',
+            chat: '💬 Chat', search: '🔍 Recherche', shopping: '🛒 Shopping',
+            audio: '🎵 Audio', video: '🎞 Vidéo', long_ctx: '📄 Long Ctx', reasoning: '🧠 Raisonnement', fast: '⚡ Rapide'
+        };
+
+        // Default signal regex patterns (stored in app_settings)
+        const DEFAULT_SIGNAL_PATTERNS = {
+            vision: 'image|photo|voir|regarde|screenshot|capture|describe|picture|diagram|visual|logo|scan|ocr',
+            code: 'code|programme|fonction|debug|bug|erreur|javascript|python|typescript|css|html|bash|sql|script|develop|coder|fix|refactor|function|variable|import|library|npm|git',
+            math: 'calcul|math|équation|equation|résoudre|solve|intégral|dérivé|statistique|probabilité|formule|algèbre|géométrie|physique|chimie|science',
+            creative: 'écris|rédige|roman|histoire|poème|créatif|créer|imagine|invente|fiction|scénario|chanson|humour|blague|joke|slogan|publicité|article|blog',
+            chat: 'comment|pourquoi|what|help|aide|explain|explique|dis.moi|tell|discuss|opinion|pense|think|avis|conseil|conseille|recommande',
+            search: 'recherche|search|trouve|find|actualité|news|récent|latest|internet|web|source|article|wiki|tendance|trend',
+            shopping: 'achète|achat|prix|tarif|shop|produit|amazon|comparaison|meilleur|recommend|buy|store|commande|livraison',
+            audio: 'audio|musique|music|son|sound|voix|voice|transcri|speech|parle|chante|sing|podcast|mp3',
+            video: 'vidéo|video|film|youtube|montage|edit|clip|animation|render',
+            long_ctx: 'long|beaucoup|fichier entier|entire|complete|many pages|analyse tout|full text|résume ce livre|summarize this book',
+            reasoning: 'raisonne|pense|réfléchis|analyse|pros.cons|pour et contre|decision|stratégi|complex|difficult|step.by.step|explain why|pourquoi exactement',
+            fast: 'vite|rapide|quick|fast|simple|court|brief|résume en|summarize in|une phrase'
+        };
+
+        let providerData = []; // from DB
+        let originalData = {}; // snapshot of saved data for change detection
+        let signalPatterns = { ...DEFAULT_SIGNAL_PATTERNS };
+        let deleteSlug = null;
+
+        const $ = id => document.getElementById(id);
+
+        // ===== TOAST =====
+        function showToast(msg, isError = false) {
+            const t = $('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // ===== TABS =====
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+                $('tab-' + btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // ===== LOAD STATS =====
+        async function loadStats() {
+            try {
+                const [convRes, msgRes] = await Promise.all([
+                    sb.from('conversations').select('id', { count: 'exact', head: true }),
+                    sb.from('messages').select('id', { count: 'exact', head: true }),
+                ]);
+                $('statConversations').textContent = convRes.count ?? 0;
+                $('statMessages').textContent = msgRes.count ?? 0;
+            } catch (e) { console.error(e); }
+        }
+
+        // ===== LOAD PROVIDER CONFIGS =====
+        async function loadProviderConfigs() {
+            const { data, error } = await sb.from('provider_configs').select('*').order('slug');
+            if (error) { showToast('Erreur chargement configs: ' + error.message, true); return; }
+            providerData = data || [];
+            originalData = {};
+            providerData.forEach(p => { originalData[p.slug] = { ...p }; });
+            $('statProviders').textContent = providerData.length;
+            renderProviderTable();
+        }
+
+        // ===== RENDER PROVIDER TABLE =====
+        function renderProviderTable() {
+            const tbody = $('providerTableBody');
+            tbody.innerHTML = '';
+            providerData.forEach(prov => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-t border-border/50 hover:bg-surface/50 transition-colors';
+                tr.dataset.slug = prov.slug;
+
+                // Provider name cell
+                let cells = `<td class="py-3 px-2 sticky left-0 bg-surface-alt z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-text">${prov.name || prov.slug}</span>
+                        <span class="text-[11px] text-text-muted font-mono">${prov.slug}</span>
+                    </div>
+                </td>`;
+
+                SIGNALS.forEach(sig => {
+                    const val = prov[sig] ?? 0;
+                    const orig = originalData[prov.slug]?.[sig] ?? 0;
+                    const changed = val !== orig ? ' changed' : '';
+                    cells += `<td class="py-3 px-1 text-center">
+                        <input type="number" min="0" max="5" value="${val}"
+                            class="weight-input${changed}"
+                            data-slug="${prov.slug}" data-signal="${sig}" />
+                    </td>`;
+                });
+
+                // Actions
+                cells += `<td class="py-3 px-1 text-center">
+                    <button class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors delete-provider-btn" data-slug="${prov.slug}" data-name="${prov.name || prov.slug}" title="Supprimer">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                </td>`;
+
+                tr.innerHTML = cells;
+                tbody.appendChild(tr);
+            });
+
+            // Bind input changes
+            tbody.querySelectorAll('.weight-input').forEach(input => {
+                input.addEventListener('change', () => {
+                    const slug = input.dataset.slug;
+                    const sig = input.dataset.signal;
+                    let val = parseInt(input.value) || 0;
+                    val = Math.max(0, Math.min(5, val));
+                    input.value = val;
+
+                    const prov = providerData.find(p => p.slug === slug);
+                    if (prov) prov[sig] = val;
+
+                    // Visual change indicator
+                    const orig = originalData[slug]?.[sig] ?? 0;
+                    input.classList.toggle('changed', val !== orig);
+                });
+            });
+
+            // Bind delete buttons
+            tbody.querySelectorAll('.delete-provider-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteSlug = btn.dataset.slug;
+                    $('deleteModalName').textContent = `Le provider "${btn.dataset.name}" (${btn.dataset.slug}) sera supprimé définitivement de la configuration.`;
+                    $('deleteModal').classList.remove('hidden');
+                });
+            });
+        }
+
+        // ===== SAVE ALL PROVIDER CONFIGS =====
+        $('btnSaveAll').addEventListener('click', async () => {
+            $('btnSaveAll').disabled = true;
+            $('btnSaveAll').innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Enregistrement...';
+
+            try {
+                for (const prov of providerData) {
+                    const updateObj = { name: prov.name };
+                    SIGNALS.forEach(sig => { updateObj[sig] = prov[sig] ?? 0; });
+                    updateObj.updated_at = new Date().toISOString();
+
+                    const { error } = await sb.from('provider_configs').upsert({ slug: prov.slug, ...updateObj });
+                    if (error) throw error;
+                }
+
+                // Update original snapshot
+                providerData.forEach(p => { originalData[p.slug] = { ...p }; });
+                renderProviderTable();
+                showToast('✓ Configuration sauvegardée !');
+            } catch (e) {
+                showToast('Erreur : ' + e.message, true);
+            }
+
+            $('btnSaveAll').disabled = false;
+            $('btnSaveAll').innerHTML = '<span class="material-symbols-outlined text-[18px]">save</span> Sauvegarder';
+        });
+
+        // ===== ADD PROVIDER =====
+        $('btnAddProvider').addEventListener('click', () => {
+            $('newProviderSlug').value = '';
+            $('newProviderName').value = '';
+            $('addProviderModal').classList.remove('hidden');
+            setTimeout(() => $('newProviderSlug').focus(), 100);
+        });
+        $('cancelAddProvider').addEventListener('click', () => $('addProviderModal').classList.add('hidden'));
+        $('confirmAddProvider').addEventListener('click', async () => {
+            const slug = $('newProviderSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            const name = $('newProviderName').value.trim();
+            if (!slug) { showToast('Slug requis', true); return; }
+            if (providerData.some(p => p.slug === slug)) { showToast('Ce slug existe déjà', true); return; }
+
+            const newProv = { slug, name: name || slug };
+            SIGNALS.forEach(sig => { newProv[sig] = 0; });
+            newProv.updated_at = new Date().toISOString();
+
+            const { error } = await sb.from('provider_configs').insert(newProv);
+            if (error) { showToast('Erreur : ' + error.message, true); return; }
+
+            $('addProviderModal').classList.add('hidden');
+            showToast(`✓ Provider "${name || slug}" ajouté`);
+            loadProviderConfigs();
+        });
+
+        // ===== DELETE PROVIDER =====
+        $('cancelDelete').addEventListener('click', () => { $('deleteModal').classList.add('hidden'); deleteSlug = null; });
+        $('confirmDelete').addEventListener('click', async () => {
+            if (!deleteSlug) return;
+            const { error } = await sb.from('provider_configs').delete().eq('slug', deleteSlug);
+            if (error) { showToast('Erreur : ' + error.message, true); return; }
+            $('deleteModal').classList.add('hidden');
+            showToast('✓ Provider supprimé');
+            deleteSlug = null;
+            loadProviderConfigs();
+        });
+
+        // ===== SIGNALS CONFIG =====
+        async function loadSignalPatterns() {
+            const { data } = await sb.from('app_settings').select('*').eq('key', 'signal_patterns').single();
+            if (data && data.value) {
+                signalPatterns = { ...DEFAULT_SIGNAL_PATTERNS, ...data.value };
+            }
+            renderSignalsList();
+        }
+
+        function renderSignalsList() {
+            const container = $('signalsList');
+            container.innerHTML = '';
+            SIGNALS.forEach(sig => {
+                const div = document.createElement('div');
+                div.className = 'border border-border rounded-xl p-4';
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-sm font-semibold">${SIGNAL_LABELS[sig]}</span>
+                        <span class="text-[11px] font-mono text-text-muted">${sig}</span>
+                    </div>
+                    <textarea data-signal="${sig}" rows="2"
+                        class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 text-text resize-y"
+                        placeholder="mots|clés|séparés|par|pipe">${signalPatterns[sig] || ''}</textarea>
+                    <p class="text-[11px] text-text-muted mt-1">Séparez les mots-clés avec <code class="bg-surface px-1 py-0.5 rounded">|</code>. Syntaxe regex supportée.</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        $('btnSaveSignals').addEventListener('click', async () => {
+            // Collect values from textareas
+            const updated = {};
+            document.querySelectorAll('#signalsList textarea').forEach(ta => {
+                updated[ta.dataset.signal] = ta.value.trim();
+            });
+            signalPatterns = updated;
+
+            const { error } = await sb.from('app_settings').upsert({
+                key: 'signal_patterns',
+                value: updated,
+                updated_at: new Date().toISOString()
+            });
+            if (error) { showToast('Erreur : ' + error.message, true); return; }
+            showToast('✓ Signaux sauvegardés !');
+        });
+
+        $('btnResetSignals').addEventListener('click', async () => {
+            signalPatterns = { ...DEFAULT_SIGNAL_PATTERNS };
+            renderSignalsList();
+            const { error } = await sb.from('app_settings').upsert({
+                key: 'signal_patterns',
+                value: DEFAULT_SIGNAL_PATTERNS,
+                updated_at: new Date().toISOString()
+            });
+            if (error) { showToast('Erreur : ' + error.message, true); return; }
+            showToast('✓ Signaux réinitialisés');
+        });
+
+        // ===== SETTINGS =====
+        async function loadSettings() {
+            const { data } = await sb.from('app_settings').select('*').eq('key', 'ranking_settings').single();
+            if (data && data.value) {
+                const s = data.value;
+                if (s.debounce) $('settingDebounce').value = s.debounce;
+                if (s.minLength) $('settingMinLength').value = s.minLength;
+                if (s.cacheTTL) $('settingCacheTTL').value = s.cacheTTL;
+                if (s.visionBonusPoints !== undefined) $('settingVisionBonusPoints').value = s.visionBonusPoints;
+                if (s.visionBonus !== undefined) $('settingVisionBonus').checked = s.visionBonus;
+                if (s.showBadge !== undefined) $('settingShowBadge').checked = s.showBadge;
+            }
+        }
+
+        $('btnSaveSettings').addEventListener('click', async () => {
+            const settings = {
+                debounce: parseInt($('settingDebounce').value) || 300,
+                minLength: parseInt($('settingMinLength').value) || 3,
+                cacheTTL: parseInt($('settingCacheTTL').value) || 30,
+                visionBonusPoints: parseInt($('settingVisionBonusPoints').value) || 4,
+                visionBonus: $('settingVisionBonus').checked,
+                showBadge: $('settingShowBadge').checked,
+            };
+            const { error } = await sb.from('app_settings').upsert({
+                key: 'ranking_settings',
+                value: settings,
+                updated_at: new Date().toISOString()
+            });
+            if (error) { showToast('Erreur : ' + error.message, true); return; }
+            showToast('✓ Paramètres sauvegardés !');
+        });
+
+        // ===== SIMULATOR =====
+        let simDebounce = null;
+        $('testPromptInput').addEventListener('input', () => {
+            clearTimeout(simDebounce);
+            simDebounce = setTimeout(() => runSimulation($('testPromptInput').value), 200);
+        });
+
+        function runSimulation(text) {
+            const container = $('testResultsContainer');
+            const sigDisplay = $('testSignalsDisplay');
+            sigDisplay.innerHTML = '';
+
+            if (!text || text.trim().length < 2) {
+                container.innerHTML = '<p class="text-sm text-text-muted text-center py-8">Tapez un prompt pour voir le classement</p>';
+                return;
+            }
+
+            const t = text.toLowerCase();
+
+            // Detect signals using current patterns
+            const detectedSignals = {};
+            SIGNALS.forEach(sig => {
+                const pattern = signalPatterns[sig];
+                if (!pattern) { detectedSignals[sig] = false; return; }
+                try {
+                    detectedSignals[sig] = new RegExp(pattern, 'i').test(t);
+                } catch (e) {
+                    detectedSignals[sig] = false;
+                }
+            });
+
+            // Show detected signals
+            SIGNALS.forEach(sig => {
+                if (detectedSignals[sig]) {
+                    const pill = document.createElement('span');
+                    pill.className = 'score-pill bg-primary/15 text-primary text-[11px]';
+                    pill.textContent = SIGNAL_LABELS[sig];
+                    sigDisplay.appendChild(pill);
+                }
+            });
+
+            if (!Object.values(detectedSignals).some(v => v)) {
+                container.innerHTML = '<p class="text-sm text-text-muted text-center py-8">Aucun signal détecté. Essayez un prompt plus spécifique.</p>';
+                return;
+            }
+
+            // Score providers
+            const scores = providerData.map(prov => {
+                let score = 0;
+                const details = [];
+                SIGNALS.forEach(sig => {
+                    if (detectedSignals[sig] && prov[sig] > 0) {
+                        score += prov[sig];
+                        details.push({ signal: sig, weight: prov[sig] });
+                    }
+                });
+                return { slug: prov.slug, name: prov.name, score, details };
+            });
+
+            scores.sort((a, b) => b.score - a.score);
+
+            // Render results
+            container.innerHTML = '';
+            scores.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'result-row flex items-center gap-3 py-3 px-4 rounded-xl ' +
+                    (idx === 0 && item.score > 0 ? 'bg-primary/8 border border-primary/20' : 'bg-surface-alt/50 border border-transparent');
+                row.style.animationDelay = (idx * 30) + 'ms';
+
+                const rankBadge = idx < 3 && item.score > 0
+                    ? `<span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                        idx === 1 ? 'bg-gray-400/20 text-gray-300' :
+                            'bg-amber-700/20 text-amber-500'
+                    }">${idx + 1}</span>`
+                    : `<span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-surface text-text-muted">${idx + 1}</span>`;
+
+                const detailsHtml = item.details.map(d =>
+                    `<span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">${SIGNAL_LABELS[d.signal]} ×${d.weight}</span>`
+                ).join(' ');
+
+                row.innerHTML = `
+                    ${rankBadge}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-text truncate">${item.name || item.slug}</p>
+                        <div class="flex flex-wrap gap-1 mt-1">${detailsHtml || '<span class="text-[11px] text-text-muted">Aucun signal</span>'}</div>
+                    </div>
+                    <span class="score-pill ${item.score > 0 ? 'bg-primary/15 text-primary' : 'bg-surface text-text-muted'}">${item.score}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                $('addProviderModal').classList.add('hidden');
+                $('deleteModal').classList.add('hidden');
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                // Save current active tab
+                const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+                if (activeTab === 'ranking') $('btnSaveAll').click();
+                else if (activeTab === 'signals') $('btnSaveSignals').click();
+                else if (activeTab === 'settings') $('btnSaveSettings').click();
+            }
+        });
+
+        // ===== INIT =====
+        Promise.all([
+            loadProviderConfigs(),
+            loadStats(),
+            loadSignalPatterns(),
+            loadSettings(),
+        ]).then(() => {
+            console.log('[Admin] Dashboard loaded');
+        });
+    </script>
+</body>
+
+</html>

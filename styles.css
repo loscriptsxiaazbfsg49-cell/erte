@@ -28,6 +28,20 @@ html.dark {
 /* ===== Base ===== */
 body {
     font-family: 'Inter', sans-serif;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#chatMessagesArea,
+textarea,
+input,
+[contenteditable="true"] {
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
 }
 
 /* ===== Scrollbar ===== */
@@ -79,7 +93,6 @@ body {
 /* Mobile adjustments */
 @media (max-width: 767px) {
 
-    :root,
     html.dark {
         --color-background-light: 0 0 0 !important;
         --color-background-subtle: 10 10 10 !important;
@@ -90,10 +103,15 @@ body {
         --color-text-muted: 140 140 140 !important;
     }
 
-    body,
-    #mainContent,
-    #contentArea {
+    html.dark body,
+    html.dark #mainContent,
+    html.dark #contentArea {
         background-color: black !important;
+    }
+
+    /* Empêcher l'apparition en doublon du titre bureau sur mobile même si JS enlève la classe hidden */
+    #currentConvTitleArea {
+        display: none !important;
     }
 
     #sidebar {
@@ -318,7 +336,7 @@ body {
     }
 
     .conversation-started #inputContainer {
-        padding-bottom: env(safe-area-inset-bottom, 12px) !important;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 24px)) !important;
     }
 
     /* Thinner and cleaner input bar */
@@ -453,7 +471,7 @@ body {
         margin: 0 !important;
         border-radius: 0 !important;
         height: 100dvh !important;
-        height: 100vh !important;
+        height: 100dvh !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -474,7 +492,7 @@ body {
         margin: 0 !important;
         border-radius: 0 !important;
         height: 100dvh !important;
-        height: 100vh !important;
+        height: 100dvh !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -667,6 +685,13 @@ body {
         transform: scale(1);
         box-shadow: 0 0 15px rgb(var(--color-primary) / 0.1);
     }
+}
+
+/* Utility pour bien bloquer la sélection sur mobile */
+.select-none {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
 }
 
 /* ===== Animations ===== */
