@@ -2426,12 +2426,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initShakeDetector() {
-    let shakeCount = 0;
     let lastUpdate = 0;
-    let x = 0, y = 0, z = 0, last_x = 0, last_y = 0, last_z = 0;
-    // Lower threshold so it works on devices with less sensitive accelerometers
-    const SHAKE_THRESHOLD = 300;
+    let last_x = 0, last_y = 0, last_z = 0;
+    // Higher threshold: must shake significantly harder
+    const SHAKE_THRESHOLD = 1500;
     let isShaking = false;
+    let shakeStartedAt = 0;
+    let lastNotifiedSecond = -1;
     let shakeTimeout = null;
 
     if (window.DeviceMotionEvent) {
@@ -2439,38 +2440,46 @@ function initShakeDetector() {
             const current = e.accelerationIncludingGravity;
             if (!current || current.x === null) return;
             const curTime = Date.now();
+
+            // Limit checks to ~10 per second
             if ((curTime - lastUpdate) > 100) {
                 const diffTime = (curTime - lastUpdate);
                 lastUpdate = curTime;
 
-                x = current.x;
-                y = current.y;
-                z = current.z;
+                const x = current.x;
+                const y = current.y;
+                const z = current.z;
 
-                // Absolute difference per axis prevents positive/negative values from cancelling out
                 const speed = (Math.abs(x - last_x) + Math.abs(y - last_y) + Math.abs(z - last_z)) / diffTime * 10000;
 
                 if (speed > SHAKE_THRESHOLD) {
                     if (!isShaking) {
                         isShaking = true;
-                        shakeCount = 0;
-                    }
-                    shakeCount++;
-
-                    if (shakeCount === 3) {
-                        showGlobalNotification("Svp, secouez le téléphone encore quelques secondes pour débloquer les fonctionnalités cachées...", 'info', 4000);
-                    }
-                    if (shakeCount >= 15) { // reduced required shakes for easier unlock
-                        // 25 iterations (approx 5 sec)
-                        isShaking = false;
-                        shakeCount = 0;
-                        showGlobalNotification("🦄 Fonctionnalités expérimentales débloquées !", 'success', 5000);
-                        localStorage.setItem('woltUnlocked', 'true');
-                        document.body.classList.add('wolt-unlocked');
+                        shakeStartedAt = Date.now();
+                        lastNotifiedSecond = -1;
                     }
 
+                    const elapsed = Date.now() - shakeStartedAt;
+                    const secondsPassed = Math.floor(elapsed / 1000);
+                    const secondsLeft = 5 - secondsPassed;
+
+                    if (secondsLeft >= 0 && secondsLeft !== lastNotifiedSecond) {
+                        lastNotifiedSecond = secondsLeft;
+                        if (secondsLeft > 0) {
+                            showGlobalNotification(`Secouez fort ! Déblocage dans : ${secondsLeft}...`, 'info', 1000);
+                        } else {
+                            showGlobalNotification("Fonctionnalité débloquée !", 'success', 5000);
+                            localStorage.setItem('woltUnlocked', 'true');
+                            document.body.classList.add('wolt-unlocked');
+                            isShaking = false;
+                        }
+                    }
+
+                    // If user stops shaking for more than 1 second, reset
                     clearTimeout(shakeTimeout);
-                    shakeTimeout = setTimeout(() => { isShaking = false; shakeCount = 0; }, 2000);
+                    shakeTimeout = setTimeout(() => {
+                        isShaking = false;
+                    }, 1000);
                 }
 
                 last_x = x;
