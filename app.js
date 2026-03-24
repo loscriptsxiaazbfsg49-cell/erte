@@ -2428,11 +2428,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function initShakeDetector() {
     let lastUpdate = 0;
     let last_x = 0, last_y = 0, last_z = 0;
-    // Higher threshold: must shake significantly harder
-    const SHAKE_THRESHOLD = 1500;
+    // Very high threshold: must shake VERY hard
+    const SHAKE_THRESHOLD = 3000;
     let isShaking = false;
     let shakeStartedAt = 0;
-    let lastNotifiedSecond = -1;
     let shakeTimeout = null;
 
     if (window.DeviceMotionEvent) {
@@ -2441,7 +2440,6 @@ function initShakeDetector() {
             if (!current || current.x === null) return;
             const curTime = Date.now();
 
-            // Limit checks to ~10 per second
             if ((curTime - lastUpdate) > 100) {
                 const diffTime = (curTime - lastUpdate);
                 lastUpdate = curTime;
@@ -2456,30 +2454,22 @@ function initShakeDetector() {
                     if (!isShaking) {
                         isShaking = true;
                         shakeStartedAt = Date.now();
-                        lastNotifiedSecond = -1;
                     }
 
+                    // Check if 5 seconds of continuous hard shaking
                     const elapsed = Date.now() - shakeStartedAt;
-                    const secondsPassed = Math.floor(elapsed / 1000);
-                    const secondsLeft = 5 - secondsPassed;
-
-                    if (secondsLeft >= 0 && secondsLeft !== lastNotifiedSecond) {
-                        lastNotifiedSecond = secondsLeft;
-                        if (secondsLeft > 0) {
-                            showGlobalNotification(`Secouez fort ! Déblocage dans : ${secondsLeft}...`, 'info', 1000);
-                        } else {
-                            showGlobalNotification("Fonctionnalité débloquée !", 'success', 5000);
-                            localStorage.setItem('woltUnlocked', 'true');
-                            document.body.classList.add('wolt-unlocked');
-                            isShaking = false;
-                        }
+                    if (elapsed >= 5000) {
+                        isShaking = false;
+                        showGlobalNotification("Fonctionnalité débloquée !", 'success', 5000);
+                        localStorage.setItem('woltUnlocked', 'true');
+                        document.body.classList.add('wolt-unlocked');
                     }
 
-                    // If user stops shaking for more than 1 second, reset
+                    // Reset if user stops shaking for more than 800ms
                     clearTimeout(shakeTimeout);
                     shakeTimeout = setTimeout(() => {
                         isShaking = false;
-                    }, 1000);
+                    }, 800);
                 }
 
                 last_x = x;
@@ -2496,12 +2486,17 @@ function toggleSidebar() {
     icon.textContent = collapsed ? 'menu_open' : 'menu';
     btn.style.left = collapsed ? '12px' : '268px';
 
-    // Manage overlay on mobile
+    // Manage overlay + push main content on mobile
     if (window.innerWidth < 768) {
+        const mainEl = document.querySelector('main');
         if (!collapsed) {
+            // Sidebar is opening: push content right
+            if (mainEl) mainEl.style.transform = 'translateX(260px)';
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.add('show'), 10);
         } else {
+            // Sidebar is closing: reset content
+            if (mainEl) mainEl.style.transform = '';
             overlay.classList.remove('show');
             setTimeout(() => { if (sidebar.classList.contains('sidebar-collapsed')) overlay.classList.add('hidden'); }, 300);
         }

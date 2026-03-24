@@ -120,13 +120,18 @@ input,
         top: 0;
         bottom: 0;
         z-index: 200;
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sidebar-collapsed {
         transform: translateX(-100%) !important;
         margin-left: 0 !important;
+    }
+
+    /* Push main content when sidebar opens */
+    main {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sidebar-toggle-btn {

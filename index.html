@@ -114,6 +114,13 @@
                     <div class="pl-1.5 mb-2">
                         <img src="logo.png" alt="Logo" class="h-8 w-auto cursor-pointer dark:invert" id="mainHomeLogo">
                     </div>
+                    <!-- Search bar (visual only, mobile only) -->
+                    <div class="relative mb-2 md:hidden">
+                        <span
+                            class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[18px] pointer-events-none">search</span>
+                        <input type="text" placeholder="Rechercher des conversations..." readonly
+                            class="w-full pl-9 pr-3 py-2 text-sm bg-background-light border border-border-subtle rounded-lg text-text-muted placeholder:text-text-muted/60 cursor-default focus:outline-none" />
+                    </div>
                     <div class="space-y-0.5">
                         <button id="newChatBtn"
                             class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group text-left">
@@ -126,7 +133,7 @@
                             <span>Nouveau chat</span>
                         </button>
                         <button id="openSearchBtn"
-                            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group text-left">
+                            class="hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-lg hover:bg-background-light hover:shadow-sm text-text-main text-sm transition-all group text-left">
                             <span
                                 class="material-symbols-outlined text-text-muted text-[20px] group-hover:text-primary">search</span>
                             <span>Rechercher des chats</span>
@@ -227,7 +234,7 @@
 
         <!-- Mobile Sidebar Overlay -->
         <div id="sidebarOverlay"
-            class="fixed inset-0 bg-black/40 backdrop-blur-md z-[150] hidden md:hidden transition-opacity duration-300 opacity-0">
+            class="fixed inset-0 bg-black/40 z-[150] hidden md:hidden transition-opacity duration-300 opacity-0">
         </div>
 
         <button id="sidebarToggle" class="sidebar-toggle-btn" onclick="toggleSidebar()"
