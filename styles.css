@@ -65,6 +65,7 @@ input,
     transform: translateX(-100%);
     margin-left: -260px;
     border-right-width: 0 !important;
+    will-change: transform;
 }
 
 .sidebar-toggle-btn {
@@ -111,6 +112,11 @@ input,
 
     /* Empêcher l'apparition en doublon du titre bureau sur mobile même si JS enlève la classe hidden */
     #currentConvTitleArea {
+        display: none !important;
+    }
+
+    /* Hide top bar (quality/privacy) on mobile when conversation started — removes black rectangle */
+    .conversation-started #topBar {
         display: none !important;
     }
 
@@ -476,7 +482,6 @@ input,
         margin: 0 !important;
         border-radius: 0 !important;
         height: 100dvh !important;
-        height: 100dvh !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -496,7 +501,6 @@ input,
         max-width: 100% !important;
         margin: 0 !important;
         border-radius: 0 !important;
-        height: 100dvh !important;
         height: 100dvh !important;
         display: flex !important;
         flex-direction: column !important;
@@ -539,6 +543,26 @@ input,
 
     #toolsMobileBackdrop {
         display: none;
+    }
+
+    /* ======= DARK MODE: Fix white inputs in modals on mobile ======= */
+    html.dark input[type="text"],
+    html.dark input[type="search"],
+    html.dark textarea {
+        background-color: rgb(var(--color-background-subtle)) !important;
+        color: rgb(var(--color-text-main)) !important;
+        border-color: rgb(var(--color-border-subtle)) !important;
+    }
+
+    /* ======= AI PROVIDER BAR: No black rectangle when hidden ======= */
+    #aiProviderSidebar:not(.sidebar-show) {
+        display: none !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
     }
 }
 

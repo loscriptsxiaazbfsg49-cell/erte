@@ -1950,12 +1950,23 @@ function initAIProviders() {
     };
     const hideSidebar = () => { sidebar.classList.add('hidden'); sidebar.classList.remove('sidebar-show'); updateLayoutToggleButtons(); };
 
-    textarea.addEventListener('focus', showSidebar);
+    textarea.addEventListener('focus', () => {
+        showSidebar();
+    });
     textarea.addEventListener('blur', () => {
         setTimeout(() => {
             const menus = [$('pageContextMenu'), $('textContextMenu'), $('sidebarContextMenu'), $('convContextMenu')];
             const isAnyMenuOpen = menus.some(m => m && !m.classList.contains('hidden'));
             if (isAnyMenuOpen) return;
+
+            // On mobile during a started conversation: hide sidebar UNLESS user is selecting a model
+            const isMobileConvStarted = window.innerWidth < 768 && state.conversationStarted;
+            if (isMobileConvStarted) {
+                // Keep sidebar visible if modelBar is open or sidebar is being interacted with
+                if (!modelBar.classList.contains('hidden') || sidebar.matches(':hover')) return;
+                hideSidebar();
+                return;
+            }
 
             if (!sidebar.matches(':hover') && !modelBar.matches(':hover') && !shouldShowSidebar() && modelBar.classList.contains('hidden')) hideSidebar();
         }, 300);
@@ -1970,12 +1981,12 @@ function initAIProviders() {
             setTimeout(() => { if (!sidebar.matches(':hover')) hideSidebar(); }, 200);
         }
     });
-    window.addEventListener('resize', () => {
+    window.addEventListener('resize', debouncedResize(() => {
         if (!modelBar.classList.contains('hidden')) positionModelBar();
         if (state.providerLayout === 'pyramid' && !state.conversationStarted && window._renderProviders) {
             window._renderProviders();
         }
-    });
+    }));
 
     window._positionModelBar = positionModelBar;
 
@@ -2074,13 +2085,20 @@ function openModelSearchModal() {
         modal.innerHTML = `
             <div class="bg-background-light rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-in-up border border-border-subtle">
                 <div class="flex items-center gap-3 px-4 py-3 border-b border-border-subtle">
-                    <span class="material-symbols-outlined text-text-muted text-[20px]">search</span>
+                    <!-- Back arrow: mobile only, left -->
+                    <button onclick="closeModelSearchModal()" class="md:hidden p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors -ml-1">
+                        <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+                    </button>
+                    <!-- Close X: desktop only -->
+                    <button onclick="closeModelSearchModal()" class="hidden md:flex p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">close</span>
+                    </button>
                     <input id="modelSearchInput" type="text"
                         class="flex-1 bg-transparent border-none text-sm text-text-main placeholder:text-text-muted focus:ring-0 outline-none"
                         placeholder="Rechercher un modèle ou une IA..." autocomplete="off" />
-                    <button onclick="closeModelSearchModal()" class="p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">close</span>
-                    </button>
+                    <!-- Search icon: mobile right; desktop hidden -->
+                    <span class="md:hidden material-symbols-outlined text-text-muted text-[20px]">search</span>
+                    <!-- Desktop search icon left of input - nothing to add here -->
                 </div>
                 <div class="px-3 py-2 border-b border-border-subtle flex gap-1.5 flex-wrap" id="modelTypeFilter">
                     <button data-type="" class="model-type-pill active text-[11px] px-3 py-1 rounded-full bg-primary text-primary-content font-medium transition-all">Tous</button>
@@ -2404,6 +2422,14 @@ function initMobileOptimizations() {
 }
 
 // ===== INIT =====
+let _resizeTimer = null;
+function debouncedResize(fn, delay = 150) {
+    return () => {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(fn, delay);
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initMobileOptimizations();
     initSidebar();
@@ -2422,7 +2448,17 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConversations();
     loadRankingConfig();
     initRealtime();
-    initShakeDetector();
+
+    // Shake detector — mobile only
+    if (window.innerWidth < 768) {
+        initShakeDetector();
+    }
+
+    // Sidebar overlay click-to-close
+    initSidebarOverlay();
+
+    // Dark mode toggle
+    initDarkModeToggle();
 });
 
 function initShakeDetector() {
@@ -2504,7 +2540,7 @@ function toggleSidebar() {
 }
 
 // Initialiser l'overlay pour fermer la sidebar
-document.addEventListener('DOMContentLoaded', () => {
+function initSidebarOverlay() {
     const overlay = $('sidebarOverlay');
     if (overlay) {
         overlay.addEventListener('click', () => {
@@ -2513,7 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+}
 
 function initSidebar() {
     const sidebar = $('sidebar'), btn = $('sidebarToggle');
@@ -3919,7 +3955,7 @@ window.showGlobalNotification = function (msg) {
 };
 
 // ===== DARK MODE TOGGLE =====
-document.addEventListener('DOMContentLoaded', () => {
+function initDarkModeToggle() {
     const themeToggleBtn = document.getElementById('ctxThemeToggle');
     const themeIcon = document.getElementById('themeIcon');
     const themeLabel = document.getElementById('themeLabel');
@@ -3948,4 +3984,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageMenu) pageMenu.classList.add('hidden');
         });
     }
-});
+}

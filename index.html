@@ -6,8 +6,19 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Omegai</title>
+    <meta name="description"
+        content="Omegai — Assistant IA multi-modèles. Discutez avec les meilleurs modèles d'intelligence artificielle en un seul endroit." />
     <link rel="manifest" href="manifest.json">
     <link id="favicon" rel="icon" type="image/png" href="logo.png" />
+
+    <!-- Preconnect to CDN origins for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://zumhjpzbvnqtcntvwvff.supabase.co">
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
@@ -49,11 +60,10 @@
     </script>
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- Line numbers plugin for highlight.js — handles multi-line hljs spans correctly -->
-    <script
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script defer
         src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=1772770003" />
+    <link rel="stylesheet" href="styles.css?v=1774674549" />
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
@@ -63,7 +73,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    console.log('Sevice Worker registered', reg);
+                    console.log('Service Worker registered', reg);
                 }).catch(err => console.error('SW registration failed', err));
             });
         }
@@ -111,7 +121,7 @@
             <div class="flex-1 overflow-y-auto custom-scrollbar">
                 <!-- Logo et Actions principales -->
                 <div class="px-2 pt-4 pb-2 space-y-4">
-                    <div class="pl-1.5 mb-2">
+                    <div class="pl-1.5 mb-2 hidden md:block">
                         <img src="logo.png" alt="Logo" class="h-8 w-auto cursor-pointer dark:invert" id="mainHomeLogo">
                     </div>
                     <!-- Search bar (visual only, mobile only) -->
@@ -730,7 +740,11 @@
         style="z-index: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
         <div class="bg-background-light rounded-2xl shadow-2xl w-full max-w-xl mx-4 overflow-hidden animate-fade-in-up">
             <div class="flex items-center gap-3 px-4 py-4 border-b border-border-subtle">
-                <span class="material-symbols-outlined text-text-muted">search</span>
+                <!-- Back arrow: mobile only, left side -->
+                <button id="closeSearchBtn"
+                    class="md:hidden flex items-center justify-center h-8 w-8 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors -ml-1">
+                    <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+                </button>
                 <input id="globalSearchInput" type="text"
                     class="flex-1 bg-transparent border-none text-base text-text-main placeholder:text-text-muted focus:ring-0"
                     placeholder="Rechercher des conversations..." />
@@ -738,11 +752,8 @@
                 <div id="searchEscBadge"
                     class="md:flex hidden items-center gap-1.5 px-1.5 py-0.5 rounded border border-border-subtle bg-background-subtle text-[10px] text-text-muted font-medium">
                     ESC</div>
-                <!-- Close button: mobile only -->
-                <button id="closeSearchBtn"
-                    class="md:hidden flex items-center justify-center h-8 w-8 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
-                    <span class="material-symbols-outlined text-[20px]">close</span>
-                </button>
+                <!-- Search icon: mobile only, right side -->
+                <span class="md:hidden material-symbols-outlined text-text-muted text-[22px]">search</span>
             </div>
             <div id="searchResults" class="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
                 <!-- Les résultats apparaîtront ici -->
@@ -992,9 +1003,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="splash.js?v=1772770003"></script>
-    <script src="app.js?v=1772770010"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script defer src="splash.js?v=1774674549"></script>
+    <script defer src="app.js?v=1774674549"></script>
 </body>
 
 </html>
