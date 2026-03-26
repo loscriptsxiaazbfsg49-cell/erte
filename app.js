@@ -1893,7 +1893,13 @@ function initAIProviders() {
                 modelBar.classList.add('hidden');
                 logoList.querySelectorAll('.provider-logo-btn').forEach(b => b.classList.remove('selected'));
                 showBadge(m.name || short, state.selectedProviderSlug);
-                textarea.focus();
+                // On mobile + new conversation: hide the AI provider bar automatically
+                if (window.innerWidth < 768 && !state.conversationStarted) {
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('sidebar-show');
+                } else {
+                    textarea.focus();
+                }
             });
             frag.appendChild(div);
         });
@@ -2356,6 +2362,21 @@ function initMobileOptimizations() {
                 const textarea = document.getElementById('chatTextarea');
                 if (textarea) textarea.focus();
             };
+        }
+
+        // ===== SIDEBAR SEARCH EXPAND ON FOCUS (mobile) =====
+        const sidebarInput = $('sidebarSearchInput');
+        const sidebarEl = $('sidebar');
+        if (sidebarInput && sidebarEl) {
+            sidebarInput.addEventListener('focus', () => {
+                sidebarEl.style.width = '100vw';
+                sidebarEl.style.maxWidth = '100vw';
+                sidebarEl.style.transition = 'width 0.3s cubic-bezier(0.4,0,0.2,1), max-width 0.3s cubic-bezier(0.4,0,0.2,1)';
+            });
+            sidebarInput.addEventListener('blur', () => {
+                sidebarEl.style.width = '';
+                sidebarEl.style.maxWidth = '';
+            });
         }
 
         // Logic to move input bar above keyboard for browsers like Chrome Mobile
@@ -3039,8 +3060,9 @@ function initConversationUI() {
     $('renameInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') $('renameConfirmBtn').click(); if (e.key === 'Escape') closeRenameModal(); });
     $('renameModal')?.addEventListener('mousedown', (e) => { if (e.target === $('renameModal')) closeRenameModal(); });
 
-    // Settings modal
+    // Settings modal — both mobile (arrow_back) and desktop (X) close buttons
     $('closeConvSettings')?.addEventListener('click', closeSettingsModal);
+    $('closeConvSettingsDesktop')?.addEventListener('click', closeSettingsModal);
     $('settingsCancelBtn')?.addEventListener('click', closeSettingsModal);
     $('convSettingsModal')?.addEventListener('mousedown', (e) => { if (e.target === $('convSettingsModal')) closeSettingsModal(); });
 
@@ -3535,6 +3557,16 @@ function initToolsMenu() {
     // Prevent keyboard drop on mobile
     attachBtn.addEventListener('mousedown', (e) => { if (isMobile()) e.preventDefault(); });
     attachBtn.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+    // touchend fires reliably on mobile even when touchstart calls preventDefault
+    attachBtn.addEventListener('touchend', (e) => {
+        if (!isMobile()) return;
+        e.preventDefault();
+        if (mobilePanel && parseFloat(mobilePanel.panel.style.opacity) > 0.5) {
+            hideMobilePanel();
+        } else {
+            showMobilePanel();
+        }
+    }, { passive: false });
 
     attachBtn.addEventListener('click', (e) => {
         e.stopPropagation();
