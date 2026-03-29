@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Silent Curator - Image Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed-dim": "#aaabab",
+              "secondary-container": "#454747",
+              "secondary": "#c6c6c7",
+              "primary-fixed": "#5d5f5f",
+              "outline": "#919191",
+              "on-surface-variant": "#c6c6c6",
+              "tertiary": "#e2e2e2",
+              "on-tertiary": "#1b1b1b",
+              "on-tertiary-container": "#000000",
+              "surface-dim": "#131313",
+              "on-surface": "#e2e2e2",
+              "surface-container-highest": "#353535",
+              "on-primary-container": "#000000",
+              "surface-variant": "#353535",
+              "on-tertiary-fixed-variant": "#e2e2e2",
+              "outline-variant": "#474747",
+              "secondary-fixed": "#c6c6c7",
+              "primary": "#ffffff",
+              "on-secondary": "#1a1c1c",
+              "surface-container-lowest": "#0e0e0e",
+              "on-background": "#e2e2e2",
+              "error-container": "#93000a",
+              "on-tertiary-fixed": "#ffffff",
+              "tertiary-fixed-dim": "#474747",
+              "inverse-surface": "#e2e2e2",
+              "error": "#ffb4ab",
+              "surface-container": "#1f1f1f",
+              "surface-tint": "#c6c6c7",
+              "background": "#131313",
+              "inverse-primary": "#5d5f5f",
+              "surface-container-high": "#2a2a2a",
+              "tertiary-container": "#919191",
+              "surface-container-low": "#1b1b1b",
+              "surface": "#131313",
+              "tertiary-fixed": "#5e5e5e",
+              "on-error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#e2e2e2",
+              "on-primary": "#1a1c1c",
+              "surface-bright": "#393939",
+              "primary-fixed-dim": "#454747",
+              "primary-container": "#d4d4d4",
+              "on-secondary-container": "#e2e2e2",
+              "on-error": "#690005",
+              "on-primary-fixed": "#ffffff",
+              "inverse-on-surface": "#303030",
+              "on-secondary-fixed-variant": "#3a3c3c",
+              "on-secondary-fixed": "#1a1c1c"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #131313;
+        }
+        .canvas-well {
+            background-color: #0e0e0e;
+        }
+        .glass-panel {
+            background: rgba(53, 53, 53, 0.85);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-surface antialiased overflow-hidden h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-[#131313] text-white font-['Manrope'] font-bold text-sm tracking-widest uppercase docked full-width top-0 no-border tonal-shift-bg flat no-shadows flex justify-between items-center w-full px-8 py-4 z-40">
+<div class="text-lg font-black text-white tracking-normal">Omegai</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-[#C6C6C6] hover:text-white transition-colors duration-300">history</button>
+<button class="material-symbols-outlined text-[#C6C6C6] hover:text-white transition-colors duration-300">settings</button>
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-xs font-bold tracking-tight normal-case">Export</button>
+</div>
+</header>
+<!-- Main Editor Canvas -->
+<main class="relative flex-grow canvas-well flex items-center justify-center p-4">
+<div class="relative w-full h-full max-h-[618px] rounded-lg overflow-hidden flex items-center justify-center">
+<!-- Central Image Placeholder -->
+<img alt="Image Canvas" class="w-full h-full object-cover opacity-80" data-alt="high-contrast monochromatic architectural photography of minimalist concrete building with dramatic shadows and sharp geometric lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8zW2EvV1CCn31gVKlcb7_BIVK5DDTSoqO-Btw-orOKFCeMSsRIMTM_RVHM8dmlqAYPcKgEb2uraxby9iLXeUU2ED5FnVXktIdhiOWaSpSU82Rw6V3QGtIjlxELQYQ2Jz6Mhdv9H4x52tVVGANMgSS6A-AxlXRWx5xtBcid7L8x1dLXVZu2kobwYRl4kJG7nKeB9xrIyW5vC5CEoRx6ec6k8glpgkd0jTtFiXCcsHc9CRLe4LlekfpekTVY26-t7XZ1U6P-hiZGquq"/>
+<!-- Floating Context Menu (Displayed as Active) -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="glass-panel w-64 rounded-lg shadow-[0_24px_48px_rgba(0,0,0,0.4)] pointer-events-auto p-2">
+<ul class="flex flex-col gap-1">
+<li class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-primary hover:text-on-primary transition-all group">
+<span class="material-symbols-outlined text-lg" data-icon="blur_on">blur_on</span>
+<span class="text-sm font-medium">Supprimer l'arrière-plan</span>
+</li>
+<li class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-primary hover:text-on-primary transition-all group">
+<span class="material-symbols-outlined text-lg" data-icon="aspect_ratio">aspect_ratio</span>
+<span class="text-sm font-medium">Étendre l'image</span>
+</li>
+<li class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-primary hover:text-on-primary transition-all group">
+<span class="material-symbols-outlined text-lg" data-icon="draw">draw</span>
+<span class="text-sm font-medium">Dessiner</span>
+</li>
+<li class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-primary hover:text-on-primary transition-all group">
+<span class="material-symbols-outlined text-lg" data-icon="animation">animation</span>
+<span class="text-sm font-medium">Animer</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</main>
+<!-- Console / Interaction Hub -->
+<section class="bg-transparent px-6 pb-28 pt-4 relative z-30">
+<!-- Simplified Prompt Bar -->
+<div class="flex items-center gap-4 bg-[#1F1F1F] rounded-full p-2 border border-white/10 shadow-2xl">
+<div class="flex-grow pl-5">
+<input class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 text-base font-medium" placeholder="Décrivez ce que vous souhaitez créer..." type="text"/>
+</div>
+<button class="bg-white text-black w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+<span class="material-symbols-outlined font-bold">magic_button</span>
+</button>
+</div>
+</section>
+<!-- Bottom Navigation Bar (Hidden/Docked logic) -->
+<nav class="bg-[#1F1F1F]/80 backdrop-blur-xl font-['Manrope'] text-[0.6875rem] uppercase tracking-[0.1em] docked full-width bottom-0 rounded-t-[3rem] inner-glow-top-1px shadow-[0_-24px_48px_rgba(0,0,0,0.4)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4">
+<div class="flex flex-col items-center justify-center bg-white text-[#1A1C1C] rounded-full p-4 w-12 h-12 Active: scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="magic_button">magic_button</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C6C6C6] p-4 hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="crop_free">crop_free</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C6C6C6] p-4 hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="auto_awesome_motion">auto_awesome_motion</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C6C6C6] p-4 hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+</div>
+</nav>
+</body></html>
