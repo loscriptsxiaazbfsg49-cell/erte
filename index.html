@@ -83,7 +83,7 @@
 <body class="bg-background-light text-text-main antialiased fixed inset-0 w-full overflow-hidden simplified-mode">
     <!-- Version de test pour mobile -->
     <div id="versionIndicator"
-        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#16</div>
+        class="fixed top-0 left-0 bg-primary/20 text-[10px] text-primary px-1 z-[9999] pointer-events-none">#17</div>
     <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splash-stage">
@@ -451,7 +451,7 @@
                                     <span class="material-symbols-outlined text-[20px]">edit</span>
                                 </button>
                                 <!-- Bouton Vocale -->
-                                <button
+                                <button id="voiceBtn"
                                     class="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-main hover:bg-background-subtle rounded-full transition-colors"
                                     title="Saisie vocale">
                                     <span class="material-symbols-outlined text-[22px]">mic</span>
@@ -588,7 +588,7 @@
         style="z-index: 400; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
         <div id="convSettingsDialog"
             class="bg-background-light rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col transition-all duration-300">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-border-subtle shrink-0">
+            <div class="relative flex items-center justify-between px-6 py-4 border-b border-border-subtle shrink-0">
                 <!-- Mobile: back arrow on left -->
                 <button id="closeConvSettings"
                     class="md:hidden p-1 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors -ml-1">
@@ -596,8 +596,10 @@
                 </button>
                 <!-- Desktop: title on left -->
                 <h3 class="hidden md:block text-base font-semibold text-text-main">Paramètres</h3>
-                <!-- Mobile: title on right -->
-                <h3 class="md:hidden text-base font-semibold text-text-main ml-auto">Paramètres</h3>
+                <!-- Mobile: title centered -->
+                <h3
+                    class="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-base font-semibold text-text-main">
+                    Paramètres</h3>
                 <!-- Desktop: close X on right -->
                 <button id="closeConvSettingsDesktop"
                     class="hidden md:flex p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-background-subtle transition-colors">
@@ -649,7 +651,7 @@
                         class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none bg-background-subtle"
                         role="switch" aria-checked="false">
                         <span
-                            class="absolute left-0.5 top-0.5 w-5 h-5 bg-background-light rounded-full shadow transition-transform duration-200 translate-x-0"
+                            class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 translate-x-0"
                             id="settingsPinKnob"></span>
                     </button>
                 </div>

@@ -688,7 +688,7 @@ function openSettingsModal(id) {
     const knob = $('settingsPinKnob');
     const isPinned = !!conv.pinned;
     toggle.setAttribute('aria-checked', isPinned ? 'true' : 'false');
-    toggle.classList.toggle('bg-black', isPinned);
+    toggle.classList.toggle('bg-primary', isPinned);
     toggle.classList.toggle('bg-background-subtle', !isPinned);
     knob.classList.toggle('translate-x-5', isPinned);
     knob.classList.toggle('translate-x-0', !isPinned);
@@ -1787,6 +1787,21 @@ function initAIProviders() {
     updateLayoutToggleButtons();
 
     function selectProvider(slug) {
+        if (state.selectedProvider === slug && !modelBar.classList.contains('hidden')) {
+            modelBar.classList.add('hidden');
+            document.querySelectorAll('.provider-logo-btn').forEach(b => b.classList.remove('selected'));
+            state.selectedProvider = null;
+            const isPyramid = state.providerLayout === 'pyramid' && document.body.classList.contains('simplified-mode') && !state.conversationStarted;
+            if (!isPyramid && (!textarea.value || !textarea.value.trim()) && document.activeElement !== textarea) {
+                const sidebarEl = $('aiProviderSidebar');
+                if (sidebarEl) {
+                    sidebarEl.classList.add('hidden');
+                    sidebarEl.classList.remove('sidebar-show');
+                }
+            }
+            return;
+        }
+
         state.selectedProvider = slug;
         const prov = state.providerMap[slug];
         if (!prov) return;
@@ -1897,8 +1912,6 @@ function initAIProviders() {
                 if (window.innerWidth < 768 && !state.conversationStarted) {
                     sidebar.classList.add('hidden');
                     sidebar.classList.remove('sidebar-show');
-                } else {
-                    textarea.focus();
                 }
             });
             frag.appendChild(div);
@@ -1916,6 +1929,14 @@ function initAIProviders() {
         const badge = $('selectedModelBadge');
         const isPyr = state.providerLayout === 'pyramid' && document.body.classList.contains('simplified-mode') && !state.conversationStarted;
         if (badge && !isPyr) badge.style.display = 'flex';
+
+        if (!isPyr && (!textarea.value || !textarea.value.trim()) && document.activeElement !== textarea) {
+            const sidebarEl = $('aiProviderSidebar');
+            if (sidebarEl) {
+                sidebarEl.classList.add('hidden');
+                sidebarEl.classList.remove('sidebar-show');
+            }
+        }
     });
 
     document.addEventListener('mousedown', (e) => {
@@ -1974,6 +1995,9 @@ function initAIProviders() {
                 return;
             }
 
+            // #24: If focus returned to the textarea within 300ms, abort the hide!
+            if (document.activeElement === textarea) return;
+
             if (!sidebar.matches(':hover') && !modelBar.matches(':hover') && !shouldShowSidebar() && modelBar.classList.contains('hidden')) hideSidebar();
         }, 300);
     });
@@ -1983,8 +2007,12 @@ function initAIProviders() {
     });
 
     sidebar.addEventListener('mouseleave', () => {
-        if (document.activeElement !== textarea && !shouldShowSidebar()) {
-            setTimeout(() => { if (!sidebar.matches(':hover')) hideSidebar(); }, 200);
+        if (!shouldShowSidebar()) {
+            setTimeout(() => {
+                if (!sidebar.matches(':hover') && document.activeElement !== textarea) {
+                    hideSidebar();
+                }
+            }, 200);
         }
     });
     window.addEventListener('resize', debouncedResize(() => {
@@ -2367,32 +2395,66 @@ function initMobileOptimizations() {
         // ===== SIDEBAR SEARCH EXPAND ON FOCUS (mobile) =====
         const sidebarInput = $('sidebarSearchInput');
         const sidebarEl = $('sidebar');
+        const sidebarToggleBtn = $('sidebarToggle');
         if (sidebarInput && sidebarEl) {
             sidebarInput.addEventListener('focus', () => {
                 sidebarEl.style.width = '100vw';
                 sidebarEl.style.maxWidth = '100vw';
                 sidebarEl.style.transition = 'width 0.3s cubic-bezier(0.4,0,0.2,1), max-width 0.3s cubic-bezier(0.4,0,0.2,1)';
+                if (sidebarToggleBtn) {
+                    sidebarToggleBtn.style.opacity = '0';
+                    sidebarToggleBtn.style.pointerEvents = 'none';
+                }
             });
-            sidebarInput.addEventListener('blur', () => {
-                sidebarEl.style.width = '';
-                sidebarEl.style.maxWidth = '';
-            });
+            // We NO LONGER make the button reappear on 'blur' because the search bar stays expanded 
+            // and the button would just overlay it. It will reappear when the sidebar is toggled closed.
         }
 
         // Logic to move input bar above keyboard for browsers like Chrome Mobile
         if (window.visualViewport) {
             const viewport = window.visualViewport;
+            let keyboardOpen = false;
+            let maxViewportHeight = viewport.height;
+
             const handleVisualViewportResize = () => {
                 const inputContainer = document.getElementById('inputContainer');
-                if (!inputContainer) return;
 
-                const offset = window.innerHeight - viewport.height;
-                const ta = document.getElementById('chatTextarea');
-                // Only push the bar up if the textarea actually has focus
-                if (offset > 60 && document.activeElement === ta) {
-                    inputContainer.style.bottom = `${offset}px`;
-                } else {
-                    inputContainer.style.bottom = '0px';
+                // Mettre à jour la hauteur maximale si l'écran "s'agrandit" (ex: rotation ou clavier fermé)
+                if (viewport.height > maxViewportHeight) {
+                    maxViewportHeight = viewport.height;
+                }
+
+                // Pour iOS (innerHeight vs viewport)
+                const offsetIOS = window.innerHeight - viewport.height;
+                // Pour Android Chrome (qui redimensionne complètement la fenêtre et le viewport)
+                const viewportDropped = maxViewportHeight - viewport.height;
+                const isKeyboardVisible = offsetIOS > 150 || viewportDropped > 150;
+
+                if (inputContainer) {
+                    const ta = document.getElementById('chatTextarea');
+                    // Sur iOS, remonter explicitement la barre au-dessus du clavier virtuel
+                    if (offsetIOS > 60 && document.activeElement === ta) {
+                        inputContainer.style.bottom = `${offsetIOS}px`;
+                    } else {
+                        inputContainer.style.bottom = '0px';
+                    }
+                }
+
+                if (isKeyboardVisible) {
+                    keyboardOpen = true;
+                } else if (!isKeyboardVisible && keyboardOpen) {
+                    keyboardOpen = false;
+                    // Désactivation de la zone de recherche (menu) si le clavier est refermé (mobile)
+                    if (window.innerWidth < 768) {
+                        const sbInput = document.getElementById('sidebarSearchInput');
+                        if (sbInput && document.activeElement === sbInput) {
+                            sbInput.blur();
+                        }
+                    }
+                }
+
+                if (window._checkTitleOverlap) {
+                    requestAnimationFrame(window._checkTitleOverlap);
                 }
             };
 
@@ -2542,6 +2604,17 @@ function toggleSidebar() {
     const collapsed = sidebar.classList.toggle('sidebar-collapsed');
     icon.textContent = collapsed ? 'menu_open' : 'menu';
     btn.style.left = collapsed ? '12px' : '268px';
+
+    // Si le menu est replié, on annule le width=100vw forcé de la barre de recherche
+    if (collapsed) {
+        sidebar.style.width = '';
+        sidebar.style.maxWidth = '';
+        // Réafficher le bouton du menu
+        if (btn) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        }
+    }
 
     // Manage overlay + push main content on mobile
     if (window.innerWidth < 768) {
@@ -2894,8 +2967,11 @@ function initChat() {
 
     // ====== Fonction partagée : resize la barre + remonte tout le bloc en mode pyramide ======
     function adjustPyramidShift() {
-        const isPyramid = state.providerLayout === 'pyramid' && document.body.classList.contains('simplified-mode') && !state.conversationStarted;
-        const maxH = isPyramid ? 120 : 192;
+        const isMobile = window.innerWidth < 768;
+        const isPyramid = !isMobile && state.providerLayout === 'pyramid' && document.body.classList.contains('simplified-mode') && !state.conversationStarted;
+
+        // Limite fixe (identique ou plus grande sur mobile pour laisser plus de place)
+        const maxH = isPyramid ? 120 : 200;
 
         // Mesure correcte : on force la hauteur au minimum pour lire le scrollHeight réel
         textarea.style.height = '0px';
@@ -2904,7 +2980,6 @@ function initChat() {
         textarea.style.height = newH + 'px';
 
         const diff = newH - 44;
-        // #12: debug log removed
 
         const inputContainer = $('inputContainer');
         const titleArea = $('titleArea');
@@ -2914,7 +2989,7 @@ function initChat() {
             inputContainer.style.top = `calc(50% - 30px - ${diff}px)`;
             titleArea.style.bottom = `calc(50% + 100px + ${diff}px)`;
         } else {
-            // Reset aux valeurs d'origine
+            // Reset aux valeurs d'origine : l'ancrage bottom-0 garantit que ça s'agrandisse UNIQUEMENT vers le haut
             inputContainer.style.top = '';
             titleArea.style.bottom = '';
         }
@@ -2927,7 +3002,47 @@ function initChat() {
         if (window._hideTextContextMenu) {
             window._hideTextContextMenu();
         }
+
+        // Masquer les icônes si on écrit dedans
+        const hasText = textarea.value.trim().length > 0;
+        const editBtn = $('editBtn');
+        const voiceBtn = $('voiceBtn');
+        if (editBtn) editBtn.style.display = hasText ? 'none' : 'flex';
+        if (voiceBtn) voiceBtn.style.display = hasText ? 'none' : 'flex';
+
+        if (window._checkTitleOverlap) {
+            window._checkTitleOverlap();
+        }
     }
+
+    window._checkTitleOverlap = () => {
+        if (window.innerWidth >= 768 || document.body.classList.contains('conversation-started')) return;
+        const titleArea = $('titleArea');
+        const inputBar = $('inputBar'); // The visually solid bar, not the gradient container
+        const textarea = $('chatTextarea');
+        if (!titleArea || !inputBar || !textarea) return;
+
+        // Retirer l'animation CSS qui bloquait les changements d'opacité (freeze animation originel)
+        titleArea.classList.remove('animate-fade-in-up');
+        titleArea.style.transition = 'opacity 0.25s ease, visibility 0.25s ease';
+
+        const titleRect = titleArea.getBoundingClientRect();
+        const inputRect = inputBar.getBoundingClientRect();
+
+        // Hide if the input bar is within 40px of the title, OR if the textarea has grown multi-line while typing
+        const isMultiLine = textarea.scrollHeight > 60;
+
+        // Si la barre de saisie superpose ou s'approche de 40px du titre (ou si on passe sur 2 lignes)
+        if (inputRect.top < titleRect.bottom + 40 || isMultiLine) {
+            titleArea.style.setProperty('opacity', '0', 'important');
+            titleArea.style.setProperty('visibility', 'hidden', 'important');
+            titleArea.style.setProperty('pointer-events', 'none', 'important');
+        } else {
+            titleArea.style.setProperty('opacity', '1', 'important');
+            titleArea.style.setProperty('visibility', 'visible', 'important');
+            titleArea.style.setProperty('pointer-events', 'auto', 'important');
+        }
+    };
 
     // Expose for layout change
     window._adjustPyramidShift = adjustPyramidShift;
@@ -3071,7 +3186,8 @@ function initConversationUI() {
         const toggle = $('settingsPinToggle'), knob = $('settingsPinKnob');
         const isPinned = toggle.getAttribute('aria-checked') === 'true';
         toggle.setAttribute('aria-checked', !isPinned ? 'true' : 'false');
-        toggle.classList.toggle('bg-black', !isPinned);
+        // bg-primary is used for 'ON' state (when replacing isPinned with !isPinned, read logic carefully)
+        toggle.classList.toggle('bg-primary', !isPinned);
         toggle.classList.toggle('bg-background-subtle', isPinned);
         knob.classList.toggle('translate-x-5', !isPinned);
         knob.classList.toggle('translate-x-0', isPinned);
