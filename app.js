@@ -2461,46 +2461,120 @@ function initMobileOptimizations() {
             viewport.addEventListener('resize', handleVisualViewportResize);
             viewport.addEventListener('scroll', handleVisualViewportResize);
         }
-        // Swipe gesture to open/close sidebar
+        // Swipe gesture to slide open/close sidebar
         let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartTarget = null;
+        let touchStartY = 0;
+        let swipeIsActive = false;
+        let isHorizontalSwipe = null;
+        let isSidebarInitiallyOpen = false;
 
         document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartTarget = e.target;
-        }, false);
-
-        document.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipeGesture();
-        }, false);
-
-        function handleSwipeGesture() {
-            const sidebar = $('sidebar');
-            if (!sidebar) return;
-            const diffX = touchEndX - touchStartX;
+            touchStartX = e.touches[0].screenX;
+            touchStartY = e.touches[0].screenY;
 
             // Ignore swipe to open menu if started in provider list (top bar on mobile)
-            if (touchStartTarget && touchStartTarget.closest('#aiProviderSidebar')) {
-                return;
+            if (e.target && e.target.closest('#aiProviderSidebar')) return;
+            // Ignore swipe on code blocks (horizontal scrolls)
+            if (e.target && e.target.closest('pre')) return;
+
+            const sidebar = $('sidebar');
+            if (!sidebar || window.innerWidth >= 768) return;
+
+            isSidebarInitiallyOpen = !sidebar.classList.contains('sidebar-collapsed');
+            swipeIsActive = true;
+            isHorizontalSwipe = null;
+
+            // Retirer la transition pour lier directement au doigt
+            sidebar.style.transition = 'none';
+            const mainEl = document.querySelector('main');
+            const overlay = $('sidebarOverlay');
+            if (mainEl) mainEl.style.transition = 'none';
+            if (overlay) overlay.style.transition = 'none';
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!swipeIsActive) return;
+            const currentX = e.touches[0].screenX;
+            const currentY = e.touches[0].screenY;
+            const diffX = currentX - touchStartX;
+            const absDiffY = Math.abs(currentY - touchStartY);
+
+            if (isHorizontalSwipe === null) {
+                if (Math.abs(diffX) > 10 || absDiffY > 10) {
+                    // Strictement de la gauche vers la droite ou inversement, pas en diagonale
+                    isHorizontalSwipe = Math.abs(diffX) > absDiffY * 1.5;
+                }
             }
 
-            // Swiping right (moving finger to the right) should show the menu if starting from left
-            if (diffX > 60 && touchStartX < window.innerWidth * 0.25) {
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    toggleSidebar();
-                    // Close keyboard automatically
-                    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                        document.activeElement.blur();
+            if (isHorizontalSwipe) {
+                const sidebar = $('sidebar');
+                const mainEl = document.querySelector('main');
+                const overlay = $('sidebarOverlay');
+                let translateX = 0;
+
+                if (isSidebarInitiallyOpen) {
+                    translateX = Math.max(-260, Math.min(0, diffX));
+                } else {
+                    translateX = Math.max(-260, Math.min(0, -260 + diffX));
+                }
+
+                sidebar.style.setProperty('transform', `translateX(${translateX}px)`, 'important');
+
+                if (mainEl) {
+                    mainEl.style.setProperty('transform', `translateX(${translateX + 260}px)`, 'important');
+                }
+                if (overlay) {
+                    const ratio = (translateX + 260) / 260;
+                    overlay.classList.remove('hidden');
+                    overlay.style.setProperty('opacity', ratio.toString(), 'important');
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            if (!swipeIsActive) return;
+            swipeIsActive = false;
+
+            const sidebar = $('sidebar');
+            const mainEl = document.querySelector('main');
+            const overlay = $('sidebarOverlay');
+            if (!sidebar || window.innerWidth >= 768) return;
+
+            // Rétablir la transition pour finir l'animation
+            sidebar.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            if (mainEl) mainEl.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            if (overlay) overlay.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            if (isHorizontalSwipe) {
+                const touchEndX = e.changedTouches[0].screenX;
+                const diffX = touchEndX - touchStartX;
+                const threshold = 60;
+
+                if (isSidebarInitiallyOpen) {
+                    if (diffX < -threshold) { toggleSidebar(); }
+                } else {
+                    if (diffX > threshold) {
+                        toggleSidebar();
+                        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                            document.activeElement.blur();
+                        }
                     }
                 }
             }
-            // Swiping left (moving finger to the left) to close it
-            else if (diffX < -60) {
-                if (!sidebar.classList.contains('sidebar-collapsed')) toggleSidebar();
-            }
-        }
+
+            // Nettoyer les styles inline pour laisser les CSS classes reprendre le relais
+            sidebar.style.removeProperty('transform');
+            if (mainEl) mainEl.style.removeProperty('transform');
+            if (overlay) overlay.style.removeProperty('opacity');
+
+            setTimeout(() => {
+                sidebar.style.transition = '';
+                if (mainEl) mainEl.style.transition = '';
+                if (overlay) overlay.style.transition = '';
+            }, 350);
+
+            isHorizontalSwipe = null;
+        }, { passive: true });
     }
 }
 
@@ -3003,12 +3077,18 @@ function initChat() {
             window._hideTextContextMenu();
         }
 
-        // Masquer les icônes si on écrit dedans
-        const hasText = textarea.value.trim().length > 0;
+        // Masquer les icônes si on écrit dedans (UNIQUEMENT SUR MOBILE)
         const editBtn = $('editBtn');
         const voiceBtn = $('voiceBtn');
-        if (editBtn) editBtn.style.display = hasText ? 'none' : 'flex';
-        if (voiceBtn) voiceBtn.style.display = hasText ? 'none' : 'flex';
+        if (window.innerWidth < 768) {
+            const hasText = textarea.value.trim().length > 0;
+            if (editBtn) editBtn.style.display = hasText ? 'none' : 'flex';
+            if (voiceBtn) voiceBtn.style.display = hasText ? 'none' : 'flex';
+        } else {
+            // S'assurer qu'ils restent visibles sur ordinateur
+            if (editBtn) editBtn.style.display = '';
+            if (voiceBtn) voiceBtn.style.display = '';
+        }
 
         if (window._checkTitleOverlap) {
             window._checkTitleOverlap();
@@ -4116,9 +4196,29 @@ function initDarkModeToggle() {
     }
 
     // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-        htmlEl.classList.add('dark');
+    const savedTheme = localStorage.getItem('theme');
+    // Détection PWA (standalone)
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (savedTheme) {
+        if (savedTheme === 'dark') htmlEl.classList.add('dark');
+        else htmlEl.classList.remove('dark');
+    } else {
+        // Aucun thème sauvegardé : logique par défaut
+        if (isPWA) {
+            // PWA : Suivre la préférence du système
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                htmlEl.classList.add('dark');
+            } else {
+                htmlEl.classList.remove('dark');
+            }
+        } else {
+            // Navigateur Web classique : Forcer le mode sombre par défaut
+            htmlEl.classList.add('dark');
+        }
     }
+
     updateThemeUI();
 
     if (themeToggleBtn) {

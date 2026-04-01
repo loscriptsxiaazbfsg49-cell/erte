@@ -357,6 +357,12 @@ const state = {
 
 ## 🔧 Changelog
 
+### 01 avril 2026 — v#18
+- **PWA Smart Theme** : Détection de l'installation en PWA (`display-mode: standalone`) pour synchroniser le mode clair/sombre avec le système. Si non-PWA, le thème sombre est imposé par défaut.
+- **Swipe intelligent (Mobile)** : Réécriture du geste de balayage pour ouvrir/fermer le menu de gauche (`touchmove`). L'animation (menu + décalage page + fondu sombre) suit désormais dynamiquement le doigt en temps réel.
+- **Protection anti-diagonales** : Analyse des axes X et Y pour désactiver le swipe latéral si le mouvement est trop vertical.
+- **Focus Mobile** : L'extérieur de la barre de saisie grandit visuellement et masque proprement les icônes (Crayon/Micro) ainsi que le titre principal en cas de superposition.
+
 ### 19 mars 2026 — v#15
 - **Badge classement IA** : Désactivation complète sur mobile. Désormais exclusif au desktop pour éviter l'encombrement visuel.
 - **Badge classement IA repositionné** : vertical à gauche du sidebar IA sur desktop, `pointer-events:none`
@@ -389,4 +395,4 @@ const state = {
 
 ---
 
-*Dernière mise à jour : 19 mars 2026 — v#14*
+*Dernière mise à jour : 01 avril 2026 — v#18*
